@@ -81,6 +81,19 @@ python3 test_api_2.py
 }
 ```
 
+## Deployment on CLI Servers (Fedora/Ubuntu/CentOS)
+Running this tool in `--headless` mode will trigger Google's Bot Detection. To run on a CLI-only server without a physical monitor, you must use a virtual framebuffer (`Xvfb`) to run Chrome in standard headed mode (`headless=False`).
+
+1. **Install Xvfb**
+   - On Fedora/CentOS: `sudo dnf install xorg-x11-server-Xvfb`
+   - On Ubuntu/Debian: `sudo apt-get install xvfb`
+2. **Run with Virtual Display**
+   Instead of running `python3 main.py` directly, wrap it in `xvfb-run`:
+   ```bash
+   xvfb-run -a python3 main.py
+   ```
+   This creates a virtual monitor in the RAM, allowing the bot to click and type stealthily without triggering headless-bot detection.
+
 ## Architecture Details
 For a deep dive into the system's inner workings, refer to [system_arch.md](system_arch.md).
 For a timeline of bug fixes (specifically regarding Google's Bot Detection), refer to [fix-requirement.md](fix-requirement.md).
