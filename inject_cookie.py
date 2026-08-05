@@ -20,7 +20,6 @@ def run():
         with open("cookie_string.txt", "r") as f:
             raw_cookie = f.read().strip()
             
-        # Tách chuỗi cookie thành danh sách key-value
         cookie_items = raw_cookie.split(';')
         for item in cookie_items:
             if '=' in item:
@@ -28,7 +27,9 @@ def run():
                 cookie_dict = {
                     'name': name,
                     'value': value,
-                    'domain': '.google.com'
+                    'domain': '.google.com',
+                    'secure': True,
+                    'httpOnly': True
                 }
                 try:
                     driver.add_cookie(cookie_dict)
@@ -38,8 +39,8 @@ def run():
     except Exception as e:
         print("Lỗi đọc file cookie_string.txt:", e)
         
-    print("Đang truy cập lại Google Flow để kiểm tra...")
-    driver.get("https://labs.google/fx/tools/flow")
+    print("Đang truy cập tài khoản Google để kích hoạt...")
+    driver.get("https://accounts.google.com")
     time.sleep(5)
     
     driver.save_screenshot("verify_login.png")
