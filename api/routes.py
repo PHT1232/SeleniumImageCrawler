@@ -18,8 +18,8 @@ _driver = None
 def get_shared_driver():
     global _driver
     if _driver is None:
-        # User yêu cầu hiện giao diện debug trước nên headless=False
-        _driver = get_driver(headless=False)
+        # User yêu cầu chạy ẩn (headless) để test
+        _driver = get_driver(headless=True)
     return _driver
 
 class InlineData(BaseModel):
