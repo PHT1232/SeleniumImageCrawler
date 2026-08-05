@@ -36,7 +36,7 @@ Start the FastAPI server:
 ```bash
 python3 main.py
 ```
-The server will start on `http://127.0.0.1:8000`.
+The server will start on `http://127.0.0.1:8989`.
 
 ### Testing the API
 You can test the queueing mechanism and generation logic using the provided test scripts:

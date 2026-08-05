@@ -1,6 +1,6 @@
 import requests
 
-url = "http://127.0.0.1:8000/generate"
+url = "http://127.0.0.1:8989/generate"
 
 prompt_text = "A futuristic cyberpunk city at night with neon lights and flying cars, high resolution, photorealistic."
 
@@ -36,6 +36,14 @@ response = requests.post(url, json=payload)
 
 if response.status_code == 200:
     print("\n[+] TEST 1 THÀNH CÔNG! Đã nhận được ảnh.")
-    # Bạn có thể print(response.json()) nếu muốn xem chuỗi Base64
+    import json
+    res_json = response.json()
+    # Cắt bớt chuỗi Base64 dài để tránh làm trôi Terminal
+    try:
+        b64 = res_json["candidates"][0]["content"]["parts"][0]["inlineData"]["data"]
+        res_json["candidates"][0]["content"]["parts"][0]["inlineData"]["data"] = b64[:50] + "... [BASE64 ĐÃ BỊ CẮT BỚT KHI IN RA]"
+    except:
+        pass
+    print(json.dumps(res_json, indent=2, ensure_ascii=False))
 else:
     print(f"\n[-] TEST 1 LỖI: {response.text}")
