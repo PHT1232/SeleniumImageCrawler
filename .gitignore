@@ -1,0 +1,7 @@
+venv/
+__pycache__/
+*.pyc
+chrome_profile/
+downloads/
+*.zip
+.env
