@@ -1,5 +1,7 @@
-selenium==4.18.1
-fastapi==0.110.0
-uvicorn==0.27.1
-webdriver-manager==4.0.1
-pydantic==2.6.3
+selenium
+fastapi
+uvicorn
+webdriver-manager
+pydantic
+undetected-chromedriver
+requests
