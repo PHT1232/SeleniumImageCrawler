@@ -5,3 +5,4 @@ webdriver-manager
 pydantic
 undetected-chromedriver
 requests
+setuptools
