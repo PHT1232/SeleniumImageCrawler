@@ -13,6 +13,10 @@ def get_driver(headless: bool = False):
     options.add_argument("--start-maximized")
     options.add_argument("--disable-notifications")
     
+    # Rất quan trọng khi chạy trên Server Linux dưới quyền Root
+    options.add_argument("--no-sandbox")
+    options.add_argument("--disable-dev-shm-usage")
+    
     # Cấu hình user profile để lưu session login google
     profile_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'chrome_profile'))
     
