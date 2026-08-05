@@ -84,11 +84,35 @@ python3 test_api_2.py
 ## Deployment on CLI Servers (Fedora/Ubuntu/CentOS)
 Running this tool in `--headless` mode will trigger Google's Bot Detection. To run on a CLI-only server without a physical monitor, you must use a virtual framebuffer (`Xvfb`) to run Chrome in standard headed mode (`headless=False`).
 
-1. **Install Xvfb**
-   - On Fedora/CentOS: `sudo dnf install xorg-x11-server-Xvfb`
-   - On Ubuntu/Debian: `sudo apt-get install xvfb`
-2. **Run with Virtual Display**
-   Instead of running `python3 main.py` directly, wrap it in `xvfb-run`:
+1. **Install Xvfb and VNC Tools**
+   - On Fedora/CentOS: `sudo dnf install xorg-x11-server-Xvfb x11vnc novnc websockify`
+   - On Ubuntu/Debian: `sudo apt-get install xvfb x11vnc novnc websockify`
+
+2. **Initialize Google Login Session via VNC (First Time Only)**
+   Google's session cookies are encrypted by the host OS keyring, meaning you cannot reliably transfer a `chrome_profile` from a Windows/Mac machine to a Linux Server. You **must** log in directly on the server.
+   
+   Run the following commands to start a web-based VNC server:
+   ```bash
+   killall -9 Xvfb x11vnc websockify chrome chromedriver python3 2>/dev/null; \
+   Xvfb :99 -screen 0 1280x720x24 & \
+   sleep 2; \
+   x11vnc -display :99 -bg -nopw -listen localhost -xkb -forever; \
+   websockify --web=/usr/share/novnc/ 6080 localhost:5900 & \
+   DISPLAY=:99 google-chrome --user-data-dir=$(pwd)/chrome_profile --no-sandbox "https://accounts.google.com" &
+   ```
+   - Open your personal web browser and navigate to `http://<YOUR_SERVER_IP>:6080/vnc.html` (or `vnc_lite.html`).
+   - Click **Connect** and interact with the server's virtual desktop to log in to your Google Account.
+   - After successfully logging in, return to the server terminal and close the processes:
+     ```bash
+     killall google-chrome
+     ```
+   - **Crucial Note:** If Chrome ever crashes or is killed forcefully, it will leave behind lock files. You must delete them before restarting the server to prevent the bot from hanging:
+     ```bash
+     rm -f chrome_profile/Singleton*
+     ```
+
+3. **Run the API Server**
+   Wrap the main script in `xvfb-run` to run it headlessly inside the virtual buffer:
    ```bash
    xvfb-run -a python3 main.py
    ```
