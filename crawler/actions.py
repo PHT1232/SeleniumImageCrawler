@@ -14,7 +14,22 @@ def login_google(driver, email=None, password=None):
 
 def navigate_to_flow(driver, url="https://labs.google/fx/tools/flow/project/93a244b7-7817-4bbb-a97c-1fd971f7da66"):
     driver.get(url)
-    time.sleep(5) 
+    time.sleep(5)
+    
+    # Xử lý trường hợp bị chặn ở màn hình Welcome (Click Create with Google Flow)
+    try:
+        create_btn = driver.find_elements(By.XPATH, "//*[contains(text(), 'Create with Google Flow')]")
+        if create_btn:
+            print("Phát hiện màn hình Welcome, đang click 'Create with Google Flow'...")
+            from selenium.webdriver.common.action_chains import ActionChains
+            ActionChains(driver).move_to_element(create_btn[0]).click().perform()
+            time.sleep(5)
+            # Sau khi click, trình duyệt có thể điều hướng đi chỗ khác, ta ép nó về lại đúng Project ID
+            print("Đang truy cập lại vào Project của chúng ta...")
+            driver.get(url)
+            time.sleep(5)
+    except Exception as e:
+        pass 
 
 def select_logo_from_uploads(driver):
     wait = WebDriverWait(driver, 10)
