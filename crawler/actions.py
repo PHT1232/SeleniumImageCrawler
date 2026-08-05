@@ -26,6 +26,7 @@ def select_logo_from_uploads(driver):
         add_btn = wait.until(EC.element_to_be_clickable((By.XPATH, "//button[.//i[text()='add_2']]")))
         ActionChains(driver).move_to_element(add_btn).pause(random.uniform(0.1, 0.3)).click().perform()
     except Exception as e:
+        driver.save_screenshot("debug.png")
         print("Lỗi click nút +, thử fallback:", e)
         # Fallback lấy nút add cuối cùng nếu add_2 không tồn tại
         add_btn = wait.until(EC.element_to_be_clickable((By.XPATH, "(//button[.//i[text()='add']])[last()]")))
