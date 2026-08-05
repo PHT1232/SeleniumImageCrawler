@@ -1,23 +1,37 @@
 import time
-from crawler.browser import get_driver
+import undetected_chromedriver as uc
+import os
 
-print("Đang khởi động Chrome...")
-# Lấy driver (headless=False để hiện giao diện)
-driver = get_driver(headless=False)
+print("Đang khởi động Chrome ở chế độ Remote Debugging...")
 
-print("Mở trang Google Flow...")
-driver.get("https://labs.google/fx/tools/flow/project/93a244b7-7817-4bbb-a97c-1fd971f7da66")
+options = uc.ChromeOptions()
+options.add_argument("--start-maximized")
+options.add_argument("--disable-notifications")
+options.add_argument("--remote-debugging-port=9222")
+options.add_argument("--remote-debugging-address=0.0.0.0")
+
+profile_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), 'chrome_profile'))
+driver = uc.Chrome(
+    options=options, 
+    use_subprocess=True, 
+    user_data_dir=profile_dir, 
+    browser_executable_path="/usr/bin/google-chrome"
+)
+
+driver.get("https://accounts.google.com")
 
 print("=========================================================")
-print("VUI LÒNG ĐĂNG NHẬP VÀO TÀI KHOẢN GOOGLE CỦA BẠN!")
-print("Sau khi đăng nhập thành công và thấy giao diện như ảnh 1,")
-print("hãy quay lại Terminal này và bấm Ctrl+C để đóng trình duyệt.")
+print("TÍNH NĂNG REMOTE DEBUGGING ĐÃ BẬT TRÊN CỔNG 9222!")
+print("Từ máy tính cá nhân của bạn, hãy mở một Terminal mới và gõ:")
+print("ssh -L 9222:localhost:9222 root@dia_chi_ip_may_chu_fedora")
+print("\nSau đó mở Chrome trên máy cá nhân và truy cập:")
+print("http://localhost:9222")
 print("=========================================================")
 
 try:
     while True:
         time.sleep(1)
 except KeyboardInterrupt:
-    print("Đang lưu phiên đăng nhập và đóng trình duyệt...")
+    print("Đang đóng trình duyệt và lưu phiên...")
     driver.quit()
-    print("Xong! Bây giờ bạn có thể dùng API.")
+    print("Xong!")
