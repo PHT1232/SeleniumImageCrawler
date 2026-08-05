@@ -16,6 +16,17 @@ async def startup_event():
     request_queue.start()
     print(">> Đã khởi động Hệ thống Xếp hàng API (Queue Worker)")
 
+@app.on_event("shutdown")
+async def shutdown_event():
+    from api.routes import _driver
+    if _driver is not None:
+        print(">> Đang đóng trình duyệt Chrome an toàn (Dọn dẹp thư mục Profile)...")
+        try:
+            _driver.quit()
+            print(">> Đã dọn dẹp xong!")
+        except:
+            pass
+
 @app.get("/")
 def health_check():
     return {"status": "ok", "message": "Selenium Crawler API is running"}
