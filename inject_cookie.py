@@ -1,7 +1,6 @@
 import undetected_chromedriver as uc
 import time
 import os
-import json
 
 def run():
     print("Đang khởi động Chrome...")
@@ -18,21 +17,26 @@ def run():
     
     print("Đang nhồi Cookie vào trình duyệt...")
     try:
-        with open("cookies.json", "r") as f:
-            cookies = json.load(f)
-            for cookie in cookies:
-                # Xóa các trường không tương thích
-                if 'sameSite' in cookie and cookie['sameSite'] not in ["Strict", "Lax", "None"]:
-                    del cookie['sameSite']
-                if 'storeId' in cookie:
-                    del cookie['storeId']
+        with open("cookie_string.txt", "r") as f:
+            raw_cookie = f.read().strip()
+            
+        # Tách chuỗi cookie thành danh sách key-value
+        cookie_items = raw_cookie.split(';')
+        for item in cookie_items:
+            if '=' in item:
+                name, value = item.strip().split('=', 1)
+                cookie_dict = {
+                    'name': name,
+                    'value': value,
+                    'domain': '.google.com'
+                }
                 try:
-                    driver.add_cookie(cookie)
+                    driver.add_cookie(cookie_dict)
                 except Exception as e:
                     pass
         print("Nhồi Cookie thành công!")
     except Exception as e:
-        print("Lỗi đọc file cookies.json:", e)
+        print("Lỗi đọc file cookie_string.txt:", e)
         
     print("Đang truy cập lại Google Flow để kiểm tra...")
     driver.get("https://labs.google/fx/tools/flow")
