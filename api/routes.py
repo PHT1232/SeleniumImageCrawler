@@ -77,4 +77,8 @@ async def generate_image_api(request: GenerateRequest):
         return result
         
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        import traceback
+        print("\n=== LỖI NGHIÊM TRỌNG TRONG QUÁ TRÌNH XỬ LÝ ===")
+        traceback.print_exc()
+        print("===============================================\n")
+        raise HTTPException(status_code=500, detail=f"Lỗi hệ thống: {str(e)}")
