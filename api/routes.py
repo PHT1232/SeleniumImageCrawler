@@ -14,6 +14,7 @@ router = APIRouter()
 
 # Biến toàn cục để giữ WebDriver luôn mở
 _driver = None
+image_count = 0
 
 def get_shared_driver():
     global _driver
@@ -43,6 +44,18 @@ class GenerateRequest(BaseModel):
 
 def run_selenium_generation(prompt: str):
     """Hàm đồng bộ chạy các lệnh Selenium, sẽ được đưa vào ThreadPool"""
+    global image_count, _driver
+    
+    # Tự động xoay Proxy sau mỗi 30 request
+    if image_count > 0 and image_count % 30 == 0:
+        if _driver is not None:
+            print(f"[*] Đã đạt mốc {image_count} ảnh. Đang tiến hành tắt trình duyệt để đổi sang IP Proxy mới...")
+            try:
+                _driver.quit()
+            except:
+                pass
+            _driver = None
+            
     driver = get_shared_driver()
     
     # 1. Mở trang Google Flow
@@ -57,6 +70,7 @@ def run_selenium_generation(prompt: str):
     # 4. Đợi ảnh sinh ra (Dynamic Wait) và Download file trả về
     result = wait_for_image_load_and_download(driver, old_srcs)
     
+    image_count += 1
     return result
 
 @router.post("/generate")

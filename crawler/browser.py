@@ -17,6 +17,15 @@ def get_driver(headless: bool = False):
     options.add_argument("--no-sandbox")
     options.add_argument("--disable-dev-shm-usage")
     
+    # Đọc cấu hình Proxy từ file proxy_config.txt (nếu có)
+    proxy_file = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'proxy_config.txt'))
+    if os.path.exists(proxy_file):
+        with open(proxy_file, 'r') as f:
+            proxy = f.read().strip()
+            if proxy:
+                print(f"[*] Đang khởi tạo Trình duyệt với Proxy: {proxy}")
+                options.add_argument(f"--proxy-server=http://{proxy}")
+    
     # Cấu hình user profile để lưu session login google
     profile_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'chrome_profile'))
     
