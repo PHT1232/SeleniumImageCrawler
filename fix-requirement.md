@@ -42,3 +42,11 @@ This document tracks bug fixes, errors, and requirement adjustments during devel
 * (2026-08-05) **Lỗi Bot Detection do cạn kiệt Điểm Tin Cậy (Trust Score / IP Flagged)**: Sau khi thử nghiệm cả phương án gõ chữ từng ký tự bằng CDP (Human Typing) và di chuyển chuột theo đường cong (ActionChains Natural Clicks), con Bot vẫn bị từ chối bằng lỗi "Something went wrong", kể cả khi đổi sang một Prompt cực ngắn ("Quả táo"). Thử nghiệm thủ công trên cùng trình duyệt đó (Copy Paste bằng tay, Bấm bằng tay) VẪN LỖI.
   - **Kết luận**: Google không bắt lỗi ở thao tác gõ chữ hay thao tác click (vì đã làm hoàn hảo). Google đã **ghi vào danh sách đen (Blacklist) địa chỉ IP** của máy chủ sau quá nhiều lần gọi API sinh ảnh liên tục bằng Bot trong 1 ngày, hoặc đánh dấu chính session của `undetected_chromedriver` đó là độc hại từ lúc khởi động. 
   - **Giải pháp triệt để**: Yêu cầu người dùng **đổi IP (Reset Router, dùng 4G, VPN)**. Sau khi IP được làm mới và Trust Score được khôi phục, toàn bộ luồng cơ chế gõ phím Human Typing CDP + Natural Mouse Click đã vượt qua bài test dễ dàng và sinh ảnh thành công! Cơ chế thao tác giả lập người thật của chúng ta là hoàn toàn chính xác, chỉ là cần một IP sạch để phát huy tác dụng.
+* (2026-08-06) **Cấu hình Proxy và Vượt qua Bot Detection (Giai đoạn 2)**:
+  - Bổ sung hệ thống luân chuyển IP thông qua cấu hình `proxy_config.txt` để qua mặt Bot Detection khi IP máy chủ (Fedora) bị block.
+  - Tích hợp **Chrome Proxy Auth Extension (Unpacked)**: Chế tạo Extension động (Unpacked Directory) cho phép truyền Username/Password/Geo-Targeting vào Proxy-Cheap mà không bị `undetected_chromedriver` từ chối (giải quyết lỗi bypass proxy do file `.zip` không tương thích).
+  - **Tắt rò rỉ WebRTC**: Vô hiệu hóa `webrtc.ip_handling_policy` để tránh rò rỉ IP thật ra ngoài khi dùng Proxy.
+  - Tái tạo session tự động: Bổ sung logic khởi động lại toàn bộ trình duyệt (`driver.quit()`) sau mỗi 30 bức ảnh để làm mới hoàn toàn dấu vân tay trình duyệt (Fingerprint) và ép Proxy-Cheap xoay IP mới.
+* (2026-08-06) **Cập nhật FastAPI**:
+  - Chuyển đổi `@app.on_event("startup")` sang `lifespan` context manager để tương thích chuẩn mới, loại bỏ cảnh báo DeprecationWarning.
+  - Thêm một endpoint WebSocket giả (Dummy) tại `/notifications/hub` chặn lỗi `403/404` từ các phần mềm gọi API bên thứ ba.

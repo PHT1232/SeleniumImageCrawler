@@ -11,12 +11,14 @@ Kiến trúc bao gồm hai thành phần chính:
 - `main.py`: Entry point for the FastAPI server (chạy trên Uvicorn port 8000). Khởi chạy Hàng đợi (Queue) khi startup.
 - `api_request_lock.py`: Trái tim của hệ thống Concurrency. Chứa `APIRequestQueue` đóng vai trò là một hàng đợi (Queue) tuần tự và một `ThreadPoolExecutor` duy nhất. Đảm bảo các Request đến cùng lúc sẽ phải xếp hàng và chờ nhau. Sau mỗi lượt sẽ tự động sleep 5 giây để tránh bị Google block.
 - `api/routes.py`: Định nghĩa API endpoints (`POST /generate`). Phân tích JSON chuẩn Gemini, bóc tách dữ liệu và đẩy vào Queue.
-- `crawler/browser.py`: Khởi tạo Selenium WebDriver (`undetected-chromedriver`). Load profile lưu sẵn để bypass đăng nhập.
+- `crawler/browser.py`: Khởi tạo Selenium WebDriver (`undetected-chromedriver`). Load profile lưu sẵn để bypass đăng nhập. Tích hợp cấu hình Proxy tùy chỉnh và vô hiệu hóa WebRTC chống rò rỉ IP.
+- `crawler/proxy_extension.py`: Module tạo Chrome Extension động (Unpacked Directory) để tiêm chứng chỉ đăng nhập Proxy (Auth/Geo-Targeting) vào trình duyệt, khắc phục giới hạn của `undetected-chromedriver`.
 - `crawler/actions.py`: Chứa các module tương tác DOM chống Bot Detection (Anti-Bot):
   - Nhập Text siêu tốc qua CDP (`Input.insertText`) từng dòng để qua mặt cơ chế theo dõi gõ phím.
   - Sử dụng `ActionChains` mô phỏng quỹ đạo click chuột tự nhiên thay vì click cơ học, tránh bị phát hiện "dịch chuyển tức thời".
   - Bắt gói tin tải ảnh ngầm qua tiêm Javascript (Fetch) để lấy thẳng dữ liệu Base64 không cần bấm nút Download trên UI.
 - `login.py`: Script khởi chạy trình duyệt một lần duy nhất để người dùng đăng nhập tay vào Google.
+- `proxy_config.txt`: File cấu hình địa chỉ Proxy xoay vòng (hỗ trợ `user:pass@host:port`).
 - `chrome_profile/`: Thư mục lưu trữ phiên đăng nhập và cookie, giúp vượt qua bước xác thực tài khoản Google trong các lần chạy sau.
 - `downloads/`: Thư mục lưu trữ ảnh được tải về từ Google Flow trước khi trả Base64 về cho API.
 
@@ -31,3 +33,4 @@ Kiến trúc bao gồm hai thành phần chính:
 8. Tiêm JS để Fetch trực tiếp ảnh mới nhất, decode sang Base64 và ghi vào thư mục `downloads/`.
 9. Trả kết quả (JSON chuẩn Gemini) về cho Client.
 10. Queue Worker tự động Sleep 5 giây để đánh lừa thuật toán tần suất của Google trước khi nhận request tiếp theo.
+11. Sau mỗi 30 request (1 chu kỳ luân chuyển IP), hệ thống tự động tắt và khởi động lại toàn bộ trình duyệt (`driver.quit()`) để ép Proxy cấp IP mới và xóa dấu vân tay (Browser Fingerprint) tích lũy.
