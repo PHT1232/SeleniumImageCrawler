@@ -87,9 +87,10 @@ def get_driver(headless: bool = False):
                             user, pwd = "", credentials
                             
                         # Thay thế session cũ (nếu có) bằng session động
+                        # Dùng [a-zA-Z0-9-]+ (không có _) để KHÔNG nuốt _ttl-30 phía sau
                         if "_session-" in user or "_session-" in pwd:
-                            user = re.sub(r'_session-[a-zA-Z0-9_-]+', f'_session-{current_session_id}', user)
-                            pwd = re.sub(r'_session-[a-zA-Z0-9_-]+', f'_session-{current_session_id}', pwd)
+                            user = re.sub(r'_session-[a-zA-Z0-9-]+', f'_session-{current_session_id}', user)
+                            pwd = re.sub(r'_session-[a-zA-Z0-9-]+', f'_session-{current_session_id}', pwd)
                         else:
                             if pwd and not user:
                                 pwd += f"_session-{current_session_id}"
