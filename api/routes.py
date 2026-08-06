@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from typing import Optional, List
-from crawler.browser import get_driver
+from crawler.browser import get_driver, close_driver, rotate_proxy_session
 from crawler.actions import (
     navigate_to_flow,
     select_logo_from_uploads,
@@ -78,6 +78,7 @@ def run_selenium_generation(prompt: str):
         error_str = str(e)
         if "Google đã block IP này" in error_str or "Google Flow báo lỗi" in error_str:
             print(f"[*] Phát hiện IP bị chặn ({error_str}). Đang ép đóng trình duyệt để xoay IP mới ngay lập tức...")
+            rotate_proxy_session()
             try:
                 _driver.quit()
             except:

@@ -1,5 +1,15 @@
 import undetected_chromedriver as uc
 import os
+import re
+import uuid
+
+# Global session ID cho Proxy-Cheap để quản lý Sticky IP programmatically
+current_session_id = str(uuid.uuid4())[:8]
+
+def rotate_proxy_session():
+    global current_session_id
+    current_session_id = str(uuid.uuid4())[:8]
+    print(f"[*] Đã xoay Proxy Session ID mới: {current_session_id}")
 
 def get_driver(headless: bool = False):
     """
@@ -23,6 +33,32 @@ def get_driver(headless: bool = False):
         with open(proxy_file, 'r') as f:
             proxy = f.read().strip()
             if proxy:
+                # Tự động ghi đè Session ID cho Proxy-Cheap để xoay IP chủ động
+                if "proxy-cheap.com" in proxy:
+                    try:
+                        credentials, host_port = proxy.split('@')
+                        if ':' in credentials:
+                            user, pwd = credentials.split(':', 1)
+                        else:
+                            user, pwd = "", credentials
+                            
+                        # Thay thế session cũ (nếu có) bằng session động
+                        if "_session-" in user or "_session-" in pwd:
+                            user = re.sub(r'_session-[a-zA-Z0-9_-]+', f'_session-{current_session_id}', user)
+                            pwd = re.sub(r'_session-[a-zA-Z0-9_-]+', f'_session-{current_session_id}', pwd)
+                        else:
+                            if pwd and not user:
+                                pwd += f"_session-{current_session_id}"
+                            else:
+                                user += f"_session-{current_session_id}"
+                                
+                        if user:
+                            proxy = f"{user}:{pwd}@{host_port}"
+                        else:
+                            proxy = f"{pwd}@{host_port}"
+                    except Exception as e:
+                        print(f"Lỗi inject proxy session: {e}")
+                        
                 if '@' in proxy:
                     from crawler.proxy_extension import create_proxy_auth_extension
                     ext_dir = create_proxy_auth_extension(proxy, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'proxy_auth_plugin')))
