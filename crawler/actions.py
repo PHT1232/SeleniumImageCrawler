@@ -173,11 +173,25 @@ def wait_for_image_load_and_download(driver, old_srcs):
         # Tăng poll_frequency lên 10s để giảm tần suất chọc vào DOM
         wait_long = WebDriverWait(driver, 240, poll_frequency=10)
         
+        try_again_count = [0]
+        
         def check_new_image(d):
             try:
                 # 1. Kiểm tra xem Google có báo lỗi sập server hoặc từ chối tạo ảnh không
                 error_msg = d.find_elements(By.XPATH, "//*[contains(text(), 'Something went wrong')]")
                 if error_msg and any(el.is_displayed() for el in error_msg):
+                    # Nếu thấy lỗi, tìm xem có nút "Try again" không để tự động cứu vãn
+                    try_again_btn = d.find_elements(By.XPATH, "//button[.//span[contains(text(), 'Try again')] or contains(text(), 'Try again')]")
+                    if try_again_btn and any(btn.is_displayed() for btn in try_again_btn):
+                        if try_again_count[0] < 3:
+                            print(f"[Anti-Bot] Google báo lỗi ngẫu nhiên, tự động bấm 'Try again' lần {try_again_count[0] + 1}/3...")
+                            d.execute_script("arguments[0].click();", try_again_btn[-1]) # Click nút Try again gần nhất
+                            try_again_count[0] += 1
+                            time.sleep(10) # Nghỉ ngơi 10s trước khi quét lại
+                            return False # Quay lại vòng lặp chờ đợi
+                        else:
+                            raise RuntimeError("Đã tự động bấm Try again 3 lần nhưng vẫn thất bại (Google đã block IP này).")
+                            
                     raise RuntimeError("Google Flow báo lỗi: Something went wrong. Please try again.")
                 
                 # 2. Quét tìm ảnh mới
