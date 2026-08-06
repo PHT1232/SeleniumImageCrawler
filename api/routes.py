@@ -15,12 +15,16 @@ router = APIRouter()
 # Biến toàn cục để giữ WebDriver luôn mở
 _driver = None
 image_count = 0
+proxy_mode = False  # Ban đầu dùng IP thật, chỉ bật proxy khi bị block
 
 def get_shared_driver():
     global _driver
     if _driver is None:
-        # User yêu cầu hiện giao diện debug trước nên headless=False
-        _driver = get_driver(headless=False)
+        if proxy_mode:
+            print("[*] Chế độ PROXY: Đang dùng Proxy làm backup do IP thật bị block...")
+        else:
+            print("[*] Chế độ IP THẬT: Đang dùng IP server trực tiếp (không qua Proxy)...")
+        _driver = get_driver(headless=False, use_proxy=proxy_mode)
     return _driver
 
 class InlineData(BaseModel):
@@ -44,7 +48,7 @@ class GenerateRequest(BaseModel):
 
 def run_selenium_generation(prompt: str):
     """Hàm đồng bộ chạy các lệnh Selenium, sẽ được đưa vào ThreadPool"""
-    global image_count, _driver
+    global image_count, _driver, proxy_mode
     import time
     
     attempt = 0
@@ -97,8 +101,9 @@ def run_selenium_generation(prompt: str):
                     time.sleep(wait_time)
                     continue
                 else:
-                    # Lần 2+: Tiến hành xoay IP cứng
-                    print(f"[*] Fail liên tiếp {consecutive_fails} lần → Tiến hành xoay IP cứng...")
+                    # Lần 2+: Bật Proxy mode và xoay IP
+                    print(f"[*] Fail liên tiếp {consecutive_fails} lần → Bật Proxy mode và xoay IP cứng...")
+                    proxy_mode = True
                     rotate_proxy_session()
                     try:
                         _driver.quit()

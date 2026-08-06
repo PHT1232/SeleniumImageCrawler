@@ -55,9 +55,11 @@ def force_kill_chrome():
     except Exception as e:
         print(f"Lỗi khi dọn dẹp Chrome: {e}")
 
-def get_driver(headless: bool = False):
+def get_driver(headless: bool = False, use_proxy: bool = True):
     """
     Khởi tạo và cấu hình Trình duyệt ẩn danh (Undetected Chrome WebDriver).
+    use_proxy=False: Dùng IP thật của server (không qua Proxy)
+    use_proxy=True: Dùng Proxy từ proxy_config.txt làm backup khi bị block
     """
     options = uc.ChromeOptions()
     if headless:
@@ -71,9 +73,10 @@ def get_driver(headless: bool = False):
     options.add_argument("--no-sandbox")
     options.add_argument("--disable-dev-shm-usage")
     
-    # Đọc cấu hình Proxy từ file proxy_config.txt (nếu có)
-    proxy_file = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'proxy_config.txt'))
-    if os.path.exists(proxy_file):
+    # Đọc cấu hình Proxy từ file proxy_config.txt (nếu có và use_proxy=True)
+    if use_proxy:
+        proxy_file = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'proxy_config.txt'))
+        if os.path.exists(proxy_file):
         with open(proxy_file, 'r') as f:
             proxy = f.read().strip()
             if proxy:
