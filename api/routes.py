@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from typing import Optional, List
-from crawler.browser import get_driver, close_driver, rotate_proxy_session
+from crawler.browser import get_driver, rotate_proxy_session
 from crawler.actions import (
     navigate_to_flow,
     select_logo_from_uploads,
