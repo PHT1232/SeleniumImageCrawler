@@ -15,16 +15,13 @@ def login_google(driver, email=None, password=None):
 def navigate_to_flow(driver, url="https://labs.google/fx/tools/flow/project/93a244b7-7817-4bbb-a97c-1fd971f7da66"):
     current_url = driver.current_url
     if current_url and current_url.startswith(url):
-        # Kiểm tra xem có bảng lỗi cũ cản đường không
-        error_msg = driver.find_elements(By.XPATH, "//*[contains(text(), 'Something went wrong')]")
-        if not error_msg or not any(el.is_displayed() for el in error_msg):
-            print("Đã ở sẵn trang Project, bỏ qua tải lại trang (F5) để giống người thật nhất có thể...")
-            return
-        print("Phát hiện bảng lỗi cũ, tiến hành F5 để dọn dẹp giao diện...")
-
-    print(f"Đang truy cập: {url}")
-    driver.get(url)
-    time.sleep(5)
+        print("Đang ở sẵn trang Project, tiến hành F5 tải lại trang để dọn dẹp sạch sẽ bộ nhớ tạm (Chống lỗi State Corruption)...")
+        driver.refresh()
+        time.sleep(5)
+    else:
+        print(f"Đang truy cập: {url}")
+        driver.get(url)
+        time.sleep(5)
     
     # Xử lý trường hợp bị chặn ở màn hình Welcome (Click Create with Google Flow)
     try:
@@ -168,44 +165,33 @@ def wait_for_image_load_and_download(driver, prompt_context):
     old_srcs = prompt_context["old_srcs"]
     old_errors_count = prompt_context["old_errors_count"]
     
-    print("Đang đợi ảnh mới xuất hiện (Dựa trên thay đổi URL ảnh)...")
-    wait = WebDriverWait(driver, 15) # Khai báo lại wait
+    print("Đang đợi ảnh mới xuất hiện (Quét liên tục mỗi 5s)...")
+    wait_long = WebDriverWait(driver, 240, poll_frequency=5)
     
     try:
-        print("Đang ngủ đông 60s để Google yên tâm vẽ ảnh (tránh quét DOM liên tục gây Bot Detection)...")
-        time.sleep(60)
-        
-        # Dynamic Wait: Đợi cho đến khi xuất hiện ảnh có link khác hoàn toàn với tập hợp ảnh cũ
-        # Tăng poll_frequency lên 10s để giảm tần suất chọc vào DOM
-        wait_long = WebDriverWait(driver, 240, poll_frequency=10)
-        
         try_again_count = [0]
         
         def check_new_image(d):
-            nonlocal old_errors_count
             try:
-                # 1. Kiểm tra xem Google có báo lỗi MỚI sập server hoặc từ chối tạo ảnh không
-                current_errors = d.find_elements(By.XPATH, "//*[contains(text(), 'Something went wrong')]")
-                # Chỉ xử lý nếu có thông báo lỗi mới sinh ra so với lúc trước khi gửi
-                if len(current_errors) > old_errors_count:
-                    # Lấy thông báo lỗi mới nhất
-                    new_error_msgs = current_errors[old_errors_count:]
-                    if any(el.is_displayed() for el in new_error_msgs):
-                        # Nếu thấy lỗi, tìm xem có nút "Try again" không để tự động cứu vãn
-                        try_again_btn = d.find_elements(By.XPATH, "//button[.//span[contains(text(), 'Try again')] or contains(text(), 'Try again')]")
-                        if try_again_btn and any(btn.is_displayed() for btn in try_again_btn):
-                            if try_again_count[0] < 3:
-                                print(f"[Anti-Bot] Google báo lỗi ngẫu nhiên, tự động bấm 'Try again' lần {try_again_count[0] + 1}/3...")
-                                d.execute_script("arguments[0].click();", try_again_btn[-1]) # Click nút Try again gần nhất
-                                try_again_count[0] += 1
-                                # Tạm thời tăng biến đếm lỗi cũ lên 1 để tránh loop lỗi hiện tại
-                                old_errors_count = len(current_errors)
-                                time.sleep(10) # Nghỉ ngơi 10s trước khi quét lại
-                                return False # Quay lại vòng lặp chờ đợi
-                            else:
-                                raise RuntimeError("Đã tự động bấm Try again 3 lần nhưng vẫn thất bại (Google đã block IP này).")
-                                
-                        raise RuntimeError("Google Flow báo lỗi: Something went wrong. Please try again.")
+                # 1. Quét tìm nút "Try again" (Nhanh và chính xác nhất)
+                try_again_btns = d.find_elements(By.XPATH, "//button[.//span[contains(text(), 'Try again')] or contains(text(), 'Try again')]")
+                if try_again_btns and any(btn.is_displayed() for btn in try_again_btns):
+                    if try_again_count[0] < 3:
+                        print(f"[Anti-Bot] Phát hiện lỗi, tự động bấm 'Try again' lần {try_again_count[0] + 1}/3...")
+                        d.execute_script("arguments[0].click();", try_again_btns[-1])
+                        try_again_count[0] += 1
+                        time.sleep(5) # Nghỉ 5s cho UI kịp update
+                        return False # Quay lại vòng lặp chờ
+                    else:
+                        raise RuntimeError("Đã tự động bấm Try again 3 lần nhưng vẫn thất bại (Google đã block IP này).")
+                
+                # Cảnh báo lỗi chung nếu không có nút Try again
+                error_msg = d.find_elements(By.XPATH, "//*[contains(text(), 'Something went wrong')]")
+                if error_msg and any(el.is_displayed() for el in error_msg):
+                    # Đảm bảo đây không phải là lỗi cũ (Bằng cách check xem số lượng lỗi có tăng không)
+                    if len(error_msg) > old_errors_count:
+                        raise RuntimeError("Google Flow báo lỗi: Something went wrong nhưng không có nút Try again.")
+                
                 
                 # 2. Quét tìm ảnh mới
                 imgs = d.find_elements(By.XPATH, "//img[contains(@src, 'media.getMediaUrlRedirect') and not(contains(@src, 'THUMBNAIL'))]")
