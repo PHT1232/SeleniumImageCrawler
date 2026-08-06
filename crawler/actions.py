@@ -8,20 +8,24 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.action_chains import ActionChains
+from selenium.common.exceptions import TimeoutException
 
 def login_google(driver, email=None, password=None):
     pass
 
 def navigate_to_flow(driver, url="https://labs.google/fx/tools/flow/project/93a244b7-7817-4bbb-a97c-1fd971f7da66"):
-    current_url = driver.current_url
-    if current_url and current_url.startswith(url):
-        print("Đang ở sẵn trang Project, tiến hành F5 tải lại trang để dọn dẹp sạch sẽ bộ nhớ tạm (Chống lỗi State Corruption)...")
-        driver.refresh()
-        time.sleep(5)
-    else:
-        print(f"Đang truy cập: {url}")
-        driver.get(url)
-        time.sleep(5)
+    try:
+        current_url = driver.current_url
+        if current_url and current_url.startswith(url):
+            print("Đang ở sẵn trang Project, tiến hành F5 tải lại trang để dọn dẹp sạch sẽ bộ nhớ tạm (Chống lỗi State Corruption)...")
+            driver.refresh()
+            time.sleep(5)
+        else:
+            print(f"Đang truy cập: {url}")
+            driver.get(url)
+            time.sleep(5)
+    except TimeoutException:
+        raise RuntimeError("Google Flow báo lỗi: Page load timeout - có thể Proxy không hoạt động hoặc kết nối chậm.")
     
     # Xử lý trường hợp bị chặn ở màn hình Welcome (Click Create with Google Flow)
     try:
@@ -35,8 +39,10 @@ def navigate_to_flow(driver, url="https://labs.google/fx/tools/flow/project/93a2
             print("Đang truy cập lại vào Project của chúng ta...")
             driver.get(url)
             time.sleep(5)
+    except TimeoutException:
+        raise RuntimeError("Google Flow báo lỗi: Page load timeout sau khi click Create with Google Flow.")
     except Exception as e:
-        pass 
+        pass
 
 def select_logo_from_uploads(driver):
     wait = WebDriverWait(driver, 10)

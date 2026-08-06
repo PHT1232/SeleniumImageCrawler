@@ -139,4 +139,8 @@ def get_driver(headless: bool = False):
         browser_executable_path="/usr/bin/google-chrome"
     )
     
+    # Đặt timeout để tránh bị treo vô hạn khi load trang (nhất là sau khi xoay Proxy)
+    driver.set_page_load_timeout(60)   # Tối đa 60s để load 1 trang
+    driver.set_script_timeout(30)      # Tối đa 30s để execute JS
+    
     return driver
