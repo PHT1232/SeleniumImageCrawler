@@ -165,35 +165,43 @@ def wait_for_image_load_and_download(driver, prompt_context):
     old_srcs = prompt_context["old_srcs"]
     old_errors_count = prompt_context["old_errors_count"]
     
-    print("Đang đợi ảnh mới xuất hiện (Quét liên tục mỗi 5s)...")
-    wait_long = WebDriverWait(driver, 240, poll_frequency=5)
+    print("Đang kiểm tra phản hồi từ Google (Đợi 5s)...")
     
     try:
-        try_again_count = [0]
+        # 1. KIỂM TRA LỖI NGAY SAU KHI GỬI (Chỉ lướt DOM 1 lần sau 5s theo yêu cầu)
+        try_again_count = 0
+        while try_again_count < 3:
+            time.sleep(5)
+            
+            try_again_btns = driver.find_elements(By.XPATH, "//button[.//span[contains(text(), 'Try again')] or contains(text(), 'Try again')]")
+            if try_again_btns and any(btn.is_displayed() for btn in try_again_btns):
+                print(f"[Anti-Bot] Phát hiện lỗi, tự động bấm 'Try again' lần {try_again_count + 1}/3...")
+                driver.execute_script("arguments[0].click();", try_again_btns[-1])
+                try_again_count += 1
+                continue # Đợi thêm 5s nữa để kiểm tra lại sau khi bấm
+                
+            error_msg = driver.find_elements(By.XPATH, "//*[contains(text(), 'Something went wrong')]")
+            if error_msg and any(el.is_displayed() for el in error_msg):
+                if len(error_msg) > old_errors_count:
+                    raise RuntimeError("Google Flow báo lỗi: Something went wrong nhưng không có nút Try again.")
+                    
+            # Nếu không có lỗi, thoát khỏi vòng lặp kiểm tra
+            break
+            
+        if try_again_count >= 3:
+            raise RuntimeError("Đã tự động bấm Try again 3 lần nhưng vẫn thất bại (Google đã block IP này).")
+            
+        # 2. NGỦ ĐÔNG CHỜ ẢNH VẼ XONG
+        print("Prompt đã được chấp nhận! Đang ngủ đông 60s để Google yên tâm vẽ ảnh (Tránh quét DOM gây chú ý)...")
+        time.sleep(60)
+        
+        # 3. QUÉT TÌM ẢNH MỚI SAU KHI TỈNH DẬY
+        print("Đã tỉnh dậy. Bắt đầu quét tìm ảnh mới mỗi 5s...")
+        wait_long = WebDriverWait(driver, 180, poll_frequency=5)
         
         def check_new_image(d):
             try:
-                # 1. Quét tìm nút "Try again" (Nhanh và chính xác nhất)
-                try_again_btns = d.find_elements(By.XPATH, "//button[.//span[contains(text(), 'Try again')] or contains(text(), 'Try again')]")
-                if try_again_btns and any(btn.is_displayed() for btn in try_again_btns):
-                    if try_again_count[0] < 3:
-                        print(f"[Anti-Bot] Phát hiện lỗi, tự động bấm 'Try again' lần {try_again_count[0] + 1}/3...")
-                        d.execute_script("arguments[0].click();", try_again_btns[-1])
-                        try_again_count[0] += 1
-                        time.sleep(5) # Nghỉ 5s cho UI kịp update
-                        return False # Quay lại vòng lặp chờ
-                    else:
-                        raise RuntimeError("Đã tự động bấm Try again 3 lần nhưng vẫn thất bại (Google đã block IP này).")
-                
-                # Cảnh báo lỗi chung nếu không có nút Try again
-                error_msg = d.find_elements(By.XPATH, "//*[contains(text(), 'Something went wrong')]")
-                if error_msg and any(el.is_displayed() for el in error_msg):
-                    # Đảm bảo đây không phải là lỗi cũ (Bằng cách check xem số lượng lỗi có tăng không)
-                    if len(error_msg) > old_errors_count:
-                        raise RuntimeError("Google Flow báo lỗi: Something went wrong nhưng không có nút Try again.")
-                
-                
-                # 2. Quét tìm ảnh mới
+                # Chỉ quét tìm ảnh mới, không quét lỗi nữa
                 imgs = d.find_elements(By.XPATH, "//img[contains(@src, 'media.getMediaUrlRedirect') and not(contains(@src, 'THUMBNAIL'))]")
                 for img in imgs:
                     src = img.get_attribute("src")
