@@ -4,8 +4,13 @@ import uvicorn
 from api.routes import router
 from api_request_lock import request_queue
 
+from crawler.browser import force_kill_chrome
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    # Dọn dẹp Zombie Chrome từ các lần chạy trước (do bị crash hoặc Ctrl+C)
+    force_kill_chrome()
+    
     request_queue.start()
     print(">> Đã khởi động Hệ thống Xếp hàng API (Queue Worker)")
     yield
