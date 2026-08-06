@@ -273,4 +273,8 @@ def wait_for_image_load_and_download(driver, prompt_context):
                 f.write(driver.page_source)
         except Exception as ex:
             print(f"Không thể lưu screenshot lỗi: {ex}")
+            
+        if "block IP" in str(e) or "Something went wrong" in str(e):
+            raise e
+            
         return False
