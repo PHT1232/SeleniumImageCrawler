@@ -63,11 +63,12 @@ def get_driver(headless: bool = False, use_proxy: bool = True):
     """
     options = uc.ChromeOptions()
     if headless:
-        options.add_argument("--headless")
-    
-    # Một số option cấu hình UI
-    options.add_argument("--start-maximized")
-    options.add_argument("--disable-notifications")
+        # Sử dụng chế độ headless mới nhất của Chrome (có hỗ trợ GPU) thay vì Xvfb
+        options.add_argument("--headless=new")
+        # Ép Chrome phải dùng GPU vật lý thay vì Software Rasterizer
+        options.add_argument("--enable-gpu")
+        options.add_argument("--ignore-gpu-blocklist")
+        options.add_argument("--use-angle=vulkan") # Thường cần thiết trên Linux để ép backend phần cứng
     
     # Rất quan trọng khi chạy trên Server Linux dưới quyền Root
     options.add_argument("--no-sandbox")
