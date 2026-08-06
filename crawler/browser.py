@@ -29,13 +29,17 @@ def get_driver(headless: bool = False):
     # Cấu hình user profile để lưu session login google
     profile_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'chrome_profile'))
     
-    # Cấu hình thư mục tải về mặc định
+    # Cấu hình thư mục tải về mặc định và CHỐNG RÒ RỈ IP (WebRTC)
     download_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'downloads'))
     prefs = {
         "download.default_directory": download_dir,
         "download.prompt_for_download": False,
         "download.directory_upgrade": True,
-        "safebrowsing.enabled": True
+        "safebrowsing.enabled": True,
+        # Chặn WebRTC rò rỉ IP thật ra ngoài (Bắt buộc khi dùng Proxy)
+        "webrtc.ip_handling_policy": "disable_non_proxied_udp",
+        "webrtc.multiple_routes_enabled": False,
+        "webrtc.nonproxied_udp_enabled": False
     }
     options.add_experimental_option("prefs", prefs)
     
