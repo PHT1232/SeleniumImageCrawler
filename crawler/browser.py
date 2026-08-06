@@ -16,7 +16,20 @@ def force_kill_chrome():
     try:
         os.system("pkill -9 -f chrome")
         os.system("pkill -9 -f chromedriver")
-        print("[*] Đã dọn dẹp các tiến trình Chrome cũ (Zombie).")
+        
+        # Xóa các file lock của Chrome profile để tránh lỗi SessionNotCreatedException
+        profile_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'chrome_profile'))
+        for lock_file in ["SingletonLock", "SingletonCookie", "SingletonSocket"]:
+            lf = os.path.join(profile_dir, lock_file)
+            if os.path.exists(lf):
+                try:
+                    if os.path.islink(lf):
+                        os.unlink(lf)
+                    else:
+                        os.remove(lf)
+                except:
+                    pass
+        print("[*] Đã dọn dẹp các tiến trình Chrome cũ và xóa file Lock.")
     except Exception as e:
         print(f"Lỗi khi dọn dẹp Chrome: {e}")
 
