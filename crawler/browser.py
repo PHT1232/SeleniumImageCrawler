@@ -77,45 +77,45 @@ def get_driver(headless: bool = False, use_proxy: bool = True):
     if use_proxy:
         proxy_file = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'proxy_config.txt'))
         if os.path.exists(proxy_file):
-        with open(proxy_file, 'r') as f:
-            proxy = f.read().strip()
-            if proxy:
-                # Tự động ghi đè Session ID cho Proxy-Cheap để xoay IP chủ động
-                if "proxy-cheap.com" in proxy:
-                    try:
-                        credentials, host_port = proxy.split('@')
-                        if ':' in credentials:
-                            user, pwd = credentials.split(':', 1)
-                        else:
-                            user, pwd = "", credentials
-                            
-                        # Thay thế session cũ (nếu có) bằng session động
-                        # Dùng [a-zA-Z0-9-]+ (không có _) để KHÔNG nuốt _ttl-30 phía sau
-                        if "_session-" in user or "_session-" in pwd:
-                            user = re.sub(r'_session-[a-zA-Z0-9-]+', f'_session-{current_session_id}', user)
-                            pwd = re.sub(r'_session-[a-zA-Z0-9-]+', f'_session-{current_session_id}', pwd)
-                        else:
-                            if pwd and not user:
-                                pwd += f"_session-{current_session_id}"
+            with open(proxy_file, 'r') as f:
+                proxy = f.read().strip()
+                if proxy:
+                    # Tự động ghi đè Session ID cho Proxy-Cheap để xoay IP chủ động
+                    if "proxy-cheap.com" in proxy:
+                        try:
+                            credentials, host_port = proxy.split('@')
+                            if ':' in credentials:
+                                user, pwd = credentials.split(':', 1)
                             else:
-                                user += f"_session-{current_session_id}"
+                                user, pwd = "", credentials
                                 
-                        if user:
-                            proxy = f"{user}:{pwd}@{host_port}"
-                        else:
-                            proxy = f"{pwd}@{host_port}"
-                    except Exception as e:
-                        print(f"Lỗi inject proxy session: {e}")
-                        
-                if '@' in proxy:
-                    from crawler.proxy_extension import create_proxy_auth_extension
-                    ext_dir = create_proxy_auth_extension(proxy, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'proxy_auth_plugin')))
-                    if ext_dir:
-                        print(f"[*] Đang khởi tạo Trình duyệt với Proxy (Unpacked Extension): {proxy}")
-                        options.add_argument(f"--load-extension={ext_dir}")
-                else:
-                    print(f"[*] Đang khởi tạo Trình duyệt với Proxy: {proxy}")
-                    options.add_argument(f"--proxy-server=http://{proxy}")
+                            # Thay thế session cũ (nếu có) bằng session động
+                            # Dùng [a-zA-Z0-9-]+ (không có _) để KHÔNG nuốt _ttl-30 phía sau
+                            if "_session-" in user or "_session-" in pwd:
+                                user = re.sub(r'_session-[a-zA-Z0-9-]+', f'_session-{current_session_id}', user)
+                                pwd = re.sub(r'_session-[a-zA-Z0-9-]+', f'_session-{current_session_id}', pwd)
+                            else:
+                                if pwd and not user:
+                                    pwd += f"_session-{current_session_id}"
+                                else:
+                                    user += f"_session-{current_session_id}"
+                                    
+                            if user:
+                                proxy = f"{user}:{pwd}@{host_port}"
+                            else:
+                                proxy = f"{pwd}@{host_port}"
+                        except Exception as e:
+                            print(f"Lỗi inject proxy session: {e}")
+                            
+                    if '@' in proxy:
+                        from crawler.proxy_extension import create_proxy_auth_extension
+                        ext_dir = create_proxy_auth_extension(proxy, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'proxy_auth_plugin')))
+                        if ext_dir:
+                            print(f"[*] Đang khởi tạo Trình duyệt với Proxy (Unpacked Extension): {proxy}")
+                            options.add_argument(f"--load-extension={ext_dir}")
+                    else:
+                        print(f"[*] Đang khởi tạo Trình duyệt với Proxy: {proxy}")
+                        options.add_argument(f"--proxy-server=http://{proxy}")
     
     # Cấu hình user profile để lưu session login google
     profile_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'chrome_profile'))
