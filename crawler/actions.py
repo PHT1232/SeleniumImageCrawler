@@ -169,27 +169,16 @@ def wait_for_image_load_and_download(driver, prompt_context):
     
     try:
         # 1. KIỂM TRA LỖI NGAY SAU KHI GỬI (Chỉ lướt DOM 1 lần sau 5s theo yêu cầu)
-        try_again_count = 0
-        while try_again_count < 3:
-            time.sleep(5)
-            
-            try_again_btns = driver.find_elements(By.XPATH, "//button[.//span[contains(text(), 'Try again')] or contains(text(), 'Try again')]")
-            if try_again_btns and any(btn.is_displayed() for btn in try_again_btns):
-                print(f"[Anti-Bot] Phát hiện lỗi, tự động bấm 'Try again' lần {try_again_count + 1}/3...")
-                driver.execute_script("arguments[0].click();", try_again_btns[-1])
-                try_again_count += 1
-                continue # Đợi thêm 5s nữa để kiểm tra lại sau khi bấm
-                
-            error_msg = driver.find_elements(By.XPATH, "//*[contains(text(), 'Something went wrong')]")
-            if error_msg and any(el.is_displayed() for el in error_msg):
-                if len(error_msg) > old_errors_count:
-                    raise RuntimeError("Google Flow báo lỗi: Something went wrong nhưng không có nút Try again.")
-                    
-            # Nếu không có lỗi, thoát khỏi vòng lặp kiểm tra
-            break
-            
-        if try_again_count >= 3:
-            raise RuntimeError("Đã tự động bấm Try again 3 lần nhưng vẫn thất bại (Google đã block IP này).")
+        time.sleep(5)
+        
+        try_again_btns = driver.find_elements(By.XPATH, "//button[.//span[contains(text(), 'Try again')] or contains(text(), 'Try again')]")
+        error_msg = driver.find_elements(By.XPATH, "//*[contains(text(), 'Something went wrong')]")
+        
+        if (try_again_btns and any(btn.is_displayed() for btn in try_again_btns)) or \
+           (error_msg and any(el.is_displayed() for el in error_msg)):
+            # Cắt bỏ hoàn toàn việc bấm Try again. Nếu có lỗi, 99% là do IP bị block.
+            # Ta quăng lỗi ngay lập tức để tuyến trên (routes.py) đập đi xây lại Trình duyệt và xoay IP mới.
+            raise RuntimeError("Google Flow báo lỗi: Something went wrong (Google đã block IP này). Không bấm Try again, buộc xoay IP ngay!")
             
         # 2. NGỦ ĐÔNG CHỜ ẢNH VẼ XONG
         print("Prompt đã được chấp nhận! Đang ngủ đông 60s để Google yên tâm vẽ ảnh (Tránh quét DOM gây chú ý)...")
