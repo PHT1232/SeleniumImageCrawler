@@ -1,7 +1,6 @@
 import os
-import zipfile
 
-def create_proxy_auth_extension(proxy_string, output_file='proxy_auth_plugin.zip'):
+def create_proxy_auth_extension(proxy_string, output_dir='proxy_auth_plugin'):
     """
     Tạo một Chrome Extension on-the-fly để truyền Username/Password cho Proxy.
     proxy_string format: "user:pass@host:port" hoặc ":pass@host:port"
@@ -70,9 +69,13 @@ def create_proxy_auth_extension(proxy_string, output_file='proxy_auth_plugin.zip
     );
     """ % (host, port, user, pwd)
 
-    extension_path = os.path.abspath(output_file)
-    with zipfile.ZipFile(extension_path, 'w') as zp:
-        zp.writestr("manifest.json", manifest_json)
-        zp.writestr("background.js", background_js)
+    extension_path = os.path.abspath(output_dir)
+    os.makedirs(extension_path, exist_ok=True)
+    
+    with open(os.path.join(extension_path, "manifest.json"), "w") as f:
+        f.write(manifest_json)
+        
+    with open(os.path.join(extension_path, "background.js"), "w") as f:
+        f.write(background_js)
     
     return extension_path

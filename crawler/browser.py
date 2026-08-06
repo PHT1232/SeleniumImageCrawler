@@ -22,12 +22,16 @@ def get_driver(headless: bool = False):
     if os.path.exists(proxy_file):
         with open(proxy_file, 'r') as f:
             proxy = f.read().strip()
-            # Bỏ dấu @ nếu sếp lỡ copy cả user:pass, ép dùng IP:PORT
-            if '@' in proxy:
-                proxy = proxy.split('@')[-1]
             if proxy:
-                print(f"[*] Đang khởi tạo Trình duyệt với Proxy: {proxy}")
-                options.add_argument(f"--proxy-server=http://{proxy}")
+                if '@' in proxy:
+                    from crawler.proxy_extension import create_proxy_auth_extension
+                    ext_dir = create_proxy_auth_extension(proxy, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'proxy_auth_plugin')))
+                    if ext_dir:
+                        print(f"[*] Đang khởi tạo Trình duyệt với Proxy (Unpacked Extension): {proxy}")
+                        options.add_argument(f"--load-extension={ext_dir}")
+                else:
+                    print(f"[*] Đang khởi tạo Trình duyệt với Proxy: {proxy}")
+                    options.add_argument(f"--proxy-server=http://{proxy}")
     
     # Cấu hình user profile để lưu session login google
     profile_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'chrome_profile'))
