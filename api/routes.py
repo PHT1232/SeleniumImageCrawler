@@ -47,8 +47,10 @@ def run_selenium_generation(prompt: str):
     global image_count, _driver
     import time
     
-    max_retries = 3
-    for attempt in range(max_retries):
+    attempt = 0
+    while True:
+        attempt += 1
+        
         # Tự động xoay Proxy sau mỗi 30 request
         if image_count > 0 and image_count % 30 == 0:
             if _driver is not None:
@@ -81,7 +83,8 @@ def run_selenium_generation(prompt: str):
         except Exception as e:
             error_str = str(e)
             if "Google đã block IP này" in error_str or "Google Flow báo lỗi" in error_str:
-                print(f"[*] Phát hiện IP bị chặn ({error_str}). Đang ép đóng trình duyệt để xoay IP mới ngay lập tức (Thử lại lần {attempt+1}/{max_retries})...")
+                # IP bị block → xoay IP và thử lại VÔ HẠN cho đến khi thành công
+                print(f"[*] IP bị chặn (lần {attempt}). Đang xoay IP và thử lại ngay...")
                 rotate_proxy_session()
                 try:
                     _driver.quit()
@@ -89,13 +92,10 @@ def run_selenium_generation(prompt: str):
                     pass
                 force_kill_chrome()
                 _driver = None
-                
-                if attempt < max_retries - 1:
-                    print(f"[*] Đang chạy lại Request hiện tại với IP mới...")
-                    time.sleep(3)
-                    continue # Bắt đầu lại vòng lặp để vẽ lại ảnh này
+                time.sleep(3)
+                continue  # Thử lại ngay với IP mới, không bao giờ từ bỏ
             
-            # Nếu không phải lỗi Block IP, hoặc đã hết số lần thử lại, thì văng lỗi ra ngoài
+            # Lỗi không phải do IP block (lỗi code, lỗi logic...) → mới báo ra ngoài
             raise e
 
 @router.post("/generate")
