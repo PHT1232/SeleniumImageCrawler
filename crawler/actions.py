@@ -157,7 +157,7 @@ def wait_for_image_load_and_download(driver, old_srcs):
     
     try:
         # Dynamic Wait: Đợi cho đến khi xuất hiện ảnh có link khác hoàn toàn với tập hợp ảnh cũ
-        wait_long = WebDriverWait(driver, 90)
+        wait_long = WebDriverWait(driver, 300)
         
         def check_new_image(d):
             imgs = d.find_elements(By.XPATH, "//img[contains(@src, 'media.getMediaUrlRedirect') and not(contains(@src, 'THUMBNAIL'))]")
