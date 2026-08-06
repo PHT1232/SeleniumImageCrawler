@@ -48,6 +48,8 @@ def run_selenium_generation(prompt: str):
     import time
     
     attempt = 0
+    consecutive_fails = 0  # Đếm số lần fail LIÊN TIẾP với cùng 1 IP
+    
     while True:
         attempt += 1
         
@@ -61,6 +63,7 @@ def run_selenium_generation(prompt: str):
                     pass
                 force_kill_chrome()
                 _driver = None
+                consecutive_fails = 0
                 
         driver = get_shared_driver()
         
@@ -78,22 +81,33 @@ def run_selenium_generation(prompt: str):
             result = wait_for_image_load_and_download(driver, prompt_context)
             
             image_count += 1
+            consecutive_fails = 0  # Reset khi thành công
             return result
             
         except Exception as e:
             error_str = str(e)
             if "Google đã block IP này" in error_str or "Google Flow báo lỗi" in error_str:
-                # IP bị block → xoay IP và thử lại VÔ HẠN cho đến khi thành công
-                print(f"[*] IP bị chặn (lần {attempt}). Đang xoay IP và thử lại ngay...")
-                rotate_proxy_session()
-                try:
-                    _driver.quit()
-                except:
-                    pass
-                force_kill_chrome()
-                _driver = None
-                time.sleep(3)
-                continue  # Thử lại ngay với IP mới, không bao giờ từ bỏ
+                consecutive_fails += 1
+                
+                if consecutive_fails < 3:
+                    # Lần 1-2: Lỗi tạm thời (server lỗi, rate limit nhẹ...)
+                    # KHÔNG cần xoay IP, chỉ cần chờ rồi F5 thử lại với cùng trình duyệt
+                    print(f"[*] Lỗi Google Flow (lần {attempt}, fail liên tiếp {consecutive_fails}/3). Chờ 15s rồi thử lại với cùng IP...")
+                    time.sleep(15)
+                    continue
+                else:
+                    # Lần 3+: Có thể IP thực sự bị block → Hard rotate
+                    print(f"[*] Fail liên tiếp {consecutive_fails} lần → Tiến hành xoay IP cứng...")
+                    rotate_proxy_session()
+                    try:
+                        _driver.quit()
+                    except:
+                        pass
+                    force_kill_chrome()
+                    _driver = None
+                    consecutive_fails = 0
+                    time.sleep(3)
+                    continue
             
             # Lỗi không phải do IP block (lỗi code, lỗi logic...) → mới báo ra ngoài
             raise e
