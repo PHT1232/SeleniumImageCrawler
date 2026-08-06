@@ -45,46 +45,56 @@ class GenerateRequest(BaseModel):
 def run_selenium_generation(prompt: str):
     """Hàm đồng bộ chạy các lệnh Selenium, sẽ được đưa vào ThreadPool"""
     global image_count, _driver
+    import time
     
-    # Tự động xoay Proxy sau mỗi 30 request
-    if image_count > 0 and image_count % 30 == 0:
-        if _driver is not None:
-            print(f"[*] Đã đạt mốc {image_count} ảnh. Đang tiến hành tắt trình duyệt để đổi sang IP Proxy mới...")
-            try:
-                _driver.quit()
-            except:
-                pass
-            _driver = None
+    max_retries = 3
+    for attempt in range(max_retries):
+        # Tự động xoay Proxy sau mỗi 30 request
+        if image_count > 0 and image_count % 30 == 0:
+            if _driver is not None:
+                print(f"[*] Đã đạt mốc {image_count} ảnh. Đang tiến hành tắt trình duyệt để đổi sang IP Proxy mới...")
+                try:
+                    _driver.quit()
+                except:
+                    pass
+                _driver = None
+                
+        driver = get_shared_driver()
+        
+        try:
+            # 1. Mở trang Google Flow
+            navigate_to_flow(driver)
             
-    driver = get_shared_driver()
-    
-    try:
-        # 1. Mở trang Google Flow
-        navigate_to_flow(driver)
-        
-        # 2. Bấm dấu +, chọn Uploads, và Add logo vào prompt
-        select_logo_from_uploads(driver)
-        
-        # 3. Paste Text prompt (Sẽ bao gồm cả enter/click send)
-        prompt_context = paste_prompt_text(driver, prompt)
-        
-        # 4. Đợi ảnh sinh ra (Dynamic Wait) và Download file trả về
-        result = wait_for_image_load_and_download(driver, prompt_context)
-        
-        image_count += 1
-        return result
-        
-    except Exception as e:
-        error_str = str(e)
-        if "Google đã block IP này" in error_str or "Google Flow báo lỗi" in error_str:
-            print(f"[*] Phát hiện IP bị chặn ({error_str}). Đang ép đóng trình duyệt để xoay IP mới ngay lập tức...")
-            rotate_proxy_session()
-            try:
-                _driver.quit()
-            except:
-                pass
-            _driver = None
-        raise e
+            # 2. Bấm dấu +, chọn Uploads, và Add logo vào prompt
+            select_logo_from_uploads(driver)
+            
+            # 3. Paste Text prompt (Sẽ bao gồm cả enter/click send)
+            prompt_context = paste_prompt_text(driver, prompt)
+            
+            # 4. Đợi ảnh sinh ra (Dynamic Wait) và Download file trả về
+            result = wait_for_image_load_and_download(driver, prompt_context)
+            
+            image_count += 1
+            return result
+            
+        except Exception as e:
+            error_str = str(e)
+            if "Google đã block IP này" in error_str or "Google Flow báo lỗi" in error_str:
+                print(f"[*] Phát hiện IP bị chặn ({error_str}). Đang ép đóng trình duyệt để xoay IP mới ngay lập tức (Thử lại lần {attempt+1}/{max_retries})...")
+                rotate_proxy_session()
+                try:
+                    _driver.quit()
+                except:
+                    pass
+                _driver = None
+                
+                if attempt < max_retries - 1:
+                    print(f"[*] Đang chạy lại Request hiện tại với IP mới...")
+                    time.sleep(3)
+                    continue # Bắt đầu lại vòng lặp để vẽ lại ảnh này
+            
+            # Nếu không phải lỗi Block IP, hoặc đã hết số lần thử lại, thì văng lỗi ra ngoài
+            raise e
 
 @router.post("/generate")
 async def generate_image_api(request: GenerateRequest):
