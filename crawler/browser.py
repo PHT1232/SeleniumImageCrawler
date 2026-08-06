@@ -11,6 +11,15 @@ def rotate_proxy_session():
     current_session_id = str(uuid.uuid4())[:8]
     print(f"[*] Đã xoay Proxy Session ID mới: {current_session_id}")
 
+def force_kill_chrome():
+    """Ép diệt toàn bộ tiến trình Chrome và ChromeDriver bị treo để giải phóng RAM và Lock file."""
+    try:
+        os.system("pkill -9 -f chrome")
+        os.system("pkill -9 -f chromedriver")
+        print("[*] Đã dọn dẹp các tiến trình Chrome cũ (Zombie).")
+    except Exception as e:
+        print(f"Lỗi khi dọn dẹp Chrome: {e}")
+
 def get_driver(headless: bool = False):
     """
     Khởi tạo và cấu hình Trình duyệt ẩn danh (Undetected Chrome WebDriver).

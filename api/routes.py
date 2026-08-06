@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from typing import Optional, List
-from crawler.browser import get_driver, rotate_proxy_session
+from crawler.browser import get_driver, rotate_proxy_session, force_kill_chrome
 from crawler.actions import (
     navigate_to_flow,
     select_logo_from_uploads,
@@ -57,6 +57,7 @@ def run_selenium_generation(prompt: str):
                     _driver.quit()
                 except:
                     pass
+                force_kill_chrome()
                 _driver = None
                 
         driver = get_shared_driver()
@@ -86,6 +87,7 @@ def run_selenium_generation(prompt: str):
                     _driver.quit()
                 except:
                     pass
+                force_kill_chrome()
                 _driver = None
                 
                 if attempt < max_retries - 1:
