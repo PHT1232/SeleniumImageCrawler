@@ -58,20 +58,32 @@ def run_selenium_generation(prompt: str):
             
     driver = get_shared_driver()
     
-    # 1. Mở trang Google Flow
-    navigate_to_flow(driver)
-    
-    # 2. Bấm dấu +, chọn Uploads, và Add logo vào prompt
-    select_logo_from_uploads(driver)
-    
-    # 3. Paste Text prompt (Sẽ bao gồm cả enter/click send)
-    old_srcs = paste_prompt_text(driver, prompt)
-    
-    # 4. Đợi ảnh sinh ra (Dynamic Wait) và Download file trả về
-    result = wait_for_image_load_and_download(driver, old_srcs)
-    
-    image_count += 1
-    return result
+    try:
+        # 1. Mở trang Google Flow
+        navigate_to_flow(driver)
+        
+        # 2. Bấm dấu +, chọn Uploads, và Add logo vào prompt
+        select_logo_from_uploads(driver)
+        
+        # 3. Paste Text prompt (Sẽ bao gồm cả enter/click send)
+        prompt_context = paste_prompt_text(driver, prompt)
+        
+        # 4. Đợi ảnh sinh ra (Dynamic Wait) và Download file trả về
+        result = wait_for_image_load_and_download(driver, prompt_context)
+        
+        image_count += 1
+        return result
+        
+    except Exception as e:
+        error_str = str(e)
+        if "Google đã block IP này" in error_str or "Google Flow báo lỗi" in error_str:
+            print(f"[*] Phát hiện IP bị chặn ({error_str}). Đang ép đóng trình duyệt để xoay IP mới ngay lập tức...")
+            try:
+                _driver.quit()
+            except:
+                pass
+            _driver = None
+        raise e
 
 @router.post("/generate")
 async def generate_image_api(request: GenerateRequest):
