@@ -33,6 +33,22 @@ def force_kill_chrome():
                             os.remove(lf)
                     except:
                         pass
+        
+        # Xóa file Preferences bị corrupt (do bị kill -9 giữa chừng khi Chrome đang ghi)
+        for pref_file in ["Preferences", "Secure Preferences"]:
+            pf = os.path.join(default_dir, pref_file)
+            if os.path.exists(pf):
+                try:
+                    # Kiểm tra xem file có bị corrupt không bằng cách parse JSON thử
+                    import json
+                    with open(pf, "r", encoding="utf-8") as f:
+                        json.load(f)
+                except (json.JSONDecodeError, ValueError):
+                    print(f"[*] Phát hiện file {pref_file} bị corrupt, đang xóa...")
+                    try:
+                        os.remove(pf)
+                    except:
+                        pass
         print("[*] Đã dọn dẹp các tiến trình Chrome cũ và xóa file Lock.")
         # Ngủ 2 giây để hệ điều hành có thời gian nhả Port và dọn rác hoàn toàn
         time.sleep(2)
