@@ -217,11 +217,8 @@ def wait_for_image_load_and_download(driver, old_srcs):
             
         print("Đã lấy được dữ liệu Base64! Đang lưu thành file...")
         base64_data = base64_string.split(',')[1]
-        import base64
-        import time
         
         filename = f"downloads/cyberpunk_fashion_{int(time.time())}.png"
-        import os
         os.makedirs("downloads", exist_ok=True)
         with open(filename, "wb") as fh:
             fh.write(base64.b64decode(base64_data))
