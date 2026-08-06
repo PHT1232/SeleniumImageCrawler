@@ -160,15 +160,19 @@ def wait_for_image_load_and_download(driver, old_srcs):
         wait_long = WebDriverWait(driver, 300)
         
         def check_new_image(d):
-            imgs = d.find_elements(By.XPATH, "//img[contains(@src, 'media.getMediaUrlRedirect') and not(contains(@src, 'THUMBNAIL'))]")
-            for img in imgs:
-                src = img.get_attribute("src")
-                if src and src not in old_srcs:
-                    # Kiểm tra xem ảnh đã load 100% data từ network chưa
-                    is_loaded = d.execute_script("return arguments[0].complete && typeof arguments[0].naturalWidth != 'undefined' && arguments[0].naturalWidth > 0;", img)
-                    if is_loaded:
-                        return img
-            return False
+            try:
+                imgs = d.find_elements(By.XPATH, "//img[contains(@src, 'media.getMediaUrlRedirect') and not(contains(@src, 'THUMBNAIL'))]")
+                for img in imgs:
+                    src = img.get_attribute("src")
+                    if src and src not in old_srcs:
+                        # Kiểm tra xem ảnh đã load 100% data từ network chưa
+                        is_loaded = d.execute_script("return arguments[0].complete && typeof arguments[0].naturalWidth != 'undefined' && arguments[0].naturalWidth > 0;", img)
+                        if is_loaded:
+                            return img
+                return False
+            except Exception:
+                # Nếu phần tử bị DOM làm mới (StaleElementReferenceException), bỏ qua và thử lại
+                return False
             
         result_img_from_wait = wait_long.until(check_new_image)
         print("Đã phát hiện ảnh mới! Đang tiến hành tải ngầm (Bypass UI)...")
