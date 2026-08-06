@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from contextlib import asynccontextmanager
 import uvicorn
 from api.routes import router
@@ -22,6 +22,17 @@ app.include_router(router)
 @app.get("/")
 def health_check():
     return {"status": "ok", "message": "Selenium Crawler API is running"}
+
+@app.websocket("/notifications/hub")
+async def dummy_websocket(websocket: WebSocket):
+    # Chấp nhận kết nối websocket để phần mềm tự động không bị lỗi 403/404
+    await websocket.accept()
+    try:
+        while True:
+            # Lắng nghe và bỏ qua các tin nhắn đến
+            await websocket.receive_text()
+    except WebSocketDisconnect:
+        pass
 
 @app.post("/identity/connect/token")
 async def dummy_token():
