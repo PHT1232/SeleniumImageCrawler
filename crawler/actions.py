@@ -161,6 +161,12 @@ def wait_for_image_load_and_download(driver, old_srcs):
         
         def check_new_image(d):
             try:
+                # 1. Kiểm tra xem Google có báo lỗi sập server hoặc từ chối tạo ảnh không
+                error_msg = d.find_elements(By.XPATH, "//*[contains(text(), 'Something went wrong')]")
+                if error_msg and any(el.is_displayed() for el in error_msg):
+                    raise RuntimeError("Google Flow báo lỗi: Something went wrong. Please try again.")
+                
+                # 2. Quét tìm ảnh mới
                 imgs = d.find_elements(By.XPATH, "//img[contains(@src, 'media.getMediaUrlRedirect') and not(contains(@src, 'THUMBNAIL'))]")
                 for img in imgs:
                     src = img.get_attribute("src")
