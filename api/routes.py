@@ -89,14 +89,13 @@ def run_selenium_generation(prompt: str):
             if "Google đã block IP này" in error_str or "Google Flow báo lỗi" in error_str:
                 consecutive_fails += 1
                 
-                if consecutive_fails < 3:
-                    # Lần 1-2: Lỗi tạm thời (server lỗi, rate limit nhẹ...)
-                    # KHÔNG cần xoay IP, chỉ cần chờ rồi F5 thử lại với cùng trình duyệt
-                    print(f"[*] Lỗi Google Flow (lần {attempt}, fail liên tiếp {consecutive_fails}/3). Chờ 15s rồi thử lại với cùng IP...")
+                if consecutive_fails < 2:
+                    # Lần 1: Lỗi tạm thời → chờ 15s thử lại cùng IP
+                    print(f"[*] Lỗi Google Flow (lần {attempt}, fail liên tiếp {consecutive_fails}/2). Chờ 15s rồi thử lại với cùng IP...")
                     time.sleep(15)
                     continue
                 else:
-                    # Lần 3+: Có thể IP thực sự bị block → Hard rotate
+                    # Lần 2+: Tiến hành xoay IP cứng
                     print(f"[*] Fail liên tiếp {consecutive_fails} lần → Tiến hành xoay IP cứng...")
                     rotate_proxy_session()
                     try:
