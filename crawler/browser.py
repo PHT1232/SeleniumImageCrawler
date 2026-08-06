@@ -14,22 +14,28 @@ def rotate_proxy_session():
 def force_kill_chrome():
     """Ép diệt toàn bộ tiến trình Chrome và ChromeDriver bị treo để giải phóng RAM và Lock file."""
     try:
+        import time
         os.system("pkill -9 -f chrome")
         os.system("pkill -9 -f chromedriver")
         
         # Xóa các file lock của Chrome profile để tránh lỗi SessionNotCreatedException
         profile_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'chrome_profile'))
-        for lock_file in ["SingletonLock", "SingletonCookie", "SingletonSocket"]:
-            lf = os.path.join(profile_dir, lock_file)
-            if os.path.exists(lf):
-                try:
-                    if os.path.islink(lf):
-                        os.unlink(lf)
-                    else:
-                        os.remove(lf)
-                except:
-                    pass
+        default_dir = os.path.join(profile_dir, "Default")
+        
+        for base_dir in [profile_dir, default_dir]:
+            for lock_file in ["SingletonLock", "SingletonCookie", "SingletonSocket"]:
+                lf = os.path.join(base_dir, lock_file)
+                if os.path.exists(lf):
+                    try:
+                        if os.path.islink(lf):
+                            os.unlink(lf)
+                        else:
+                            os.remove(lf)
+                    except:
+                        pass
         print("[*] Đã dọn dẹp các tiến trình Chrome cũ và xóa file Lock.")
+        # Ngủ 2 giây để hệ điều hành có thời gian nhả Port và dọn rác hoàn toàn
+        time.sleep(2)
     except Exception as e:
         print(f"Lỗi khi dọn dẹp Chrome: {e}")
 
