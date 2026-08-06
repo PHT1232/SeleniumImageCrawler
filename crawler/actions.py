@@ -234,5 +234,12 @@ def wait_for_image_load_and_download(driver, old_srcs):
         }
         
     except Exception as e:
-        print(f"Lỗi khi đợi ảnh mới: {e}")
+        print(f"Lỗi khi đợi ảnh mới: {type(e).__name__} - {e}")
+        try:
+            driver.save_screenshot("error_wait_image.png")
+            print("Đã lưu screenshot lỗi tại error_wait_image.png để kiểm tra (có thể do timeout 90s chưa thấy ảnh mới hoặc sai XPath).")
+            with open("error_page_source.html", "w", encoding="utf-8") as f:
+                f.write(driver.page_source)
+        except Exception as ex:
+            print(f"Không thể lưu screenshot lỗi: {ex}")
         return False
