@@ -13,6 +13,16 @@ def login_google(driver, email=None, password=None):
     pass
 
 def navigate_to_flow(driver, url="https://labs.google/fx/tools/flow/project/93a244b7-7817-4bbb-a97c-1fd971f7da66"):
+    current_url = driver.current_url
+    if current_url and current_url.startswith(url):
+        # Kiểm tra xem có bảng lỗi cũ cản đường không
+        error_msg = driver.find_elements(By.XPATH, "//*[contains(text(), 'Something went wrong')]")
+        if not error_msg or not any(el.is_displayed() for el in error_msg):
+            print("Đã ở sẵn trang Project, bỏ qua tải lại trang (F5) để giống người thật nhất có thể...")
+            return
+        print("Phát hiện bảng lỗi cũ, tiến hành F5 để dọn dẹp giao diện...")
+
+    print(f"Đang truy cập: {url}")
     driver.get(url)
     time.sleep(5)
     
