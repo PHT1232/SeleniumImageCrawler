@@ -90,9 +90,11 @@ def run_selenium_generation(prompt: str):
                 consecutive_fails += 1
                 
                 if consecutive_fails < 2:
-                    # Lần 1: Lỗi tạm thời → chờ 15s thử lại cùng IP
-                    print(f"[*] Lỗi Google Flow (lần {attempt}, fail liên tiếp {consecutive_fails}/2). Chờ 15s rồi thử lại với cùng IP...")
-                    time.sleep(15)
+                    # Lần 1: Google đang tạm thời rate-limit (Soft block theo Account/fingerprint)
+                    # Càng retry nhanh càng bị đánh giá là bot → chờ lâu hơn
+                    wait_time = 300  # 5 phút
+                    print(f"[*] Google Flow tạm thời chặn (soft block). Chờ {wait_time}s ({wait_time//60} phút) rồi thử lại...")
+                    time.sleep(wait_time)
                     continue
                 else:
                     # Lần 2+: Tiến hành xoay IP cứng
