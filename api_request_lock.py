@@ -30,9 +30,11 @@ class APIRequestQueue:
                 future.set_exception(e)
             finally:
                 self.queue.task_done()
-                print(">> [QUEUE] Đã xử lý xong 1 request. Đang đợi 5 giây trước khi nhận request tiếp theo...")
-                # Đợi 5 giây sau khi xử lý xong mỗi request (Theo yêu cầu của người dùng)
-                await asyncio.sleep(5)
+                # Đợi ngẫu nhiên 15-45 giây giữa các request để tránh bị Google phát hiện là Bot
+                import random
+                wait_time = random.randint(15, 45)
+                print(f">> [QUEUE] Đã xử lý xong 1 request. Đang nghỉ ngẫu nhiên {wait_time}s trước khi nhận request tiếp theo...")
+                await asyncio.sleep(wait_time)
                 print(">> [QUEUE] Đã sẵn sàng cho request tiếp theo!")
 
     async def enqueue(self, task_func, *args):
