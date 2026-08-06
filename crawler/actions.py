@@ -156,8 +156,12 @@ def wait_for_image_load_and_download(driver, old_srcs):
     wait = WebDriverWait(driver, 15) # Khai báo lại wait
     
     try:
+        print("Đang ngủ đông 60s để Google yên tâm vẽ ảnh (tránh quét DOM liên tục gây Bot Detection)...")
+        time.sleep(60)
+        
         # Dynamic Wait: Đợi cho đến khi xuất hiện ảnh có link khác hoàn toàn với tập hợp ảnh cũ
-        wait_long = WebDriverWait(driver, 300)
+        # Tăng poll_frequency lên 10s để giảm tần suất chọc vào DOM
+        wait_long = WebDriverWait(driver, 240, poll_frequency=10)
         
         def check_new_image(d):
             try:
