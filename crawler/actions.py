@@ -182,6 +182,7 @@ def wait_for_image_load_and_download(driver, prompt_context):
         try_again_count = [0]
         
         def check_new_image(d):
+            nonlocal old_errors_count
             try:
                 # 1. Kiểm tra xem Google có báo lỗi MỚI sập server hoặc từ chối tạo ảnh không
                 current_errors = d.find_elements(By.XPATH, "//*[contains(text(), 'Something went wrong')]")
@@ -198,7 +199,6 @@ def wait_for_image_load_and_download(driver, prompt_context):
                                 d.execute_script("arguments[0].click();", try_again_btn[-1]) # Click nút Try again gần nhất
                                 try_again_count[0] += 1
                                 # Tạm thời tăng biến đếm lỗi cũ lên 1 để tránh loop lỗi hiện tại
-                                nonlocal old_errors_count
                                 old_errors_count = len(current_errors)
                                 time.sleep(10) # Nghỉ ngơi 10s trước khi quét lại
                                 return False # Quay lại vòng lặp chờ đợi
