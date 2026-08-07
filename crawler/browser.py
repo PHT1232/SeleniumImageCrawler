@@ -20,27 +20,33 @@ def force_kill_chrome():
         os.system("pkill -9 -f chromedriver")
         
         # Xóa các file lock của Chrome profile để tránh lỗi SessionNotCreatedException
-        profile_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'chrome_profile'))
-        default_dir = os.path.join(profile_dir, "Default")
+        # Cập nhật quét toàn bộ các thư mục có tiền tố chrome_profile* (hỗ trợ nhiều tài khoản)
+        base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+        import glob
+        profile_dirs = glob.glob(os.path.join(base_dir, "chrome_profile*"))
         
-        for base_dir in [profile_dir, default_dir]:
-            for lock_file in ["SingletonLock", "SingletonCookie", "SingletonSocket"]:
-                lf = os.path.join(base_dir, lock_file)
-                if os.path.exists(lf):
+        for p_dir in profile_dirs:
+            default_dir = os.path.join(p_dir, "Default")
+            for bd in [p_dir, default_dir]:
+                for lock_file in ["SingletonLock", "SingletonCookie", "SingletonSocket"]:
+                    lf = os.path.join(bd, lock_file)
+                    if os.path.exists(lf):
+                        try:
+                            if os.path.islink(lf):
+                                os.unlink(lf)
+                            else:
+                                os.remove(lf)
+                        except:
+                            pass
+        
+        # Xóa file Preferences bị corrupt cho toàn bộ profile
+        for p_dir in profile_dirs:
+            default_dir = os.path.join(p_dir, "Default")
+            for pref_file in ["Preferences", "Secure Preferences"]:
+                pf = os.path.join(default_dir, pref_file)
+                if os.path.exists(pf):
                     try:
-                        if os.path.islink(lf):
-                            os.unlink(lf)
-                        else:
-                            os.remove(lf)
-                    except:
-                        pass
-        
-        # Xóa file Preferences bị corrupt (do bị kill -9 giữa chừng khi Chrome đang ghi)
-        for pref_file in ["Preferences", "Secure Preferences"]:
-            pf = os.path.join(default_dir, pref_file)
-            if os.path.exists(pf):
-                try:
-                    # Kiểm tra xem file có bị corrupt không bằng cách parse JSON thử
+                        # Kiểm tra xem file có bị corrupt không bằng cách parse JSON thử
                     import json
                     with open(pf, "r", encoding="utf-8") as f:
                         json.load(f)
@@ -56,11 +62,12 @@ def force_kill_chrome():
     except Exception as e:
         print(f"Lỗi khi dọn dẹp Chrome: {e}")
 
-def get_driver(headless: bool = False, use_proxy: bool = True):
+def get_driver(headless: bool = False, use_proxy: bool = True, profile_dir: str = "chrome_profile"):
     """
     Khởi tạo và cấu hình Trình duyệt ẩn danh (Undetected Chrome WebDriver).
     use_proxy=False: Dùng IP thật của server (không qua Proxy)
     use_proxy=True: Dùng Proxy từ proxy_config.txt làm backup khi bị block
+    profile_dir: Thư mục chứa session của tài khoản cụ thể (Đa tài khoản)
     """
     options = uc.ChromeOptions()
     if headless:
@@ -120,7 +127,7 @@ def get_driver(headless: bool = False, use_proxy: bool = True):
                         options.add_argument(f"--proxy-server=http://{proxy}")
     
     # Cấu hình user profile để lưu session login google
-    profile_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'chrome_profile'))
+    abs_profile_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', profile_dir))
     
     # Cấu hình thư mục tải về mặc định và CHỐNG RÒ RỈ IP (WebRTC)
     download_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'downloads'))
@@ -147,7 +154,7 @@ def get_driver(headless: bool = False, use_proxy: bool = True):
     driver = uc.Chrome(
         options=options, 
         use_subprocess=True, 
-        user_data_dir=profile_dir, 
+        user_data_dir=abs_profile_dir, 
         browser_executable_path=chrome_path
     )
     

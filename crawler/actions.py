@@ -13,7 +13,10 @@ from selenium.common.exceptions import TimeoutException
 def login_google(driver, email=None, password=None):
     pass
 
-def navigate_to_flow(driver, url="https://labs.google/fx/tools/flow/project/93a244b7-7817-4bbb-a97c-1fd971f7da66"):
+def navigate_to_flow(driver, url: str):
+    if not url:
+        raise ValueError("Project URL không được để trống (Chưa cấu hình trong config.json)")
+        
     try:
         current_url = driver.current_url
         if current_url and current_url.startswith(url):

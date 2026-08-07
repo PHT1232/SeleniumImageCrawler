@@ -9,6 +9,7 @@ from crawler.actions import (
     wait_for_image_load_and_download
 )
 from api_request_lock import request_queue
+from api.account_manager import account_manager
 
 router = APIRouter()
 
@@ -24,8 +25,14 @@ def get_shared_driver():
             print("[*] Chế độ PROXY: Đang dùng Proxy làm backup do IP thật bị block...")
         else:
             print("[*] Chế độ IP THẬT: Đang dùng IP server trực tiếp (không qua Proxy)...")
+            
+        profile_dir = account_manager.get_current_profile_dir()
+        if not profile_dir:
+            raise RuntimeError("Không còn tài khoản Google nào khả dụng (Tất cả đã hết Quota).")
+            
+        print(f"[*] Đang sử dụng Profile: {profile_dir}")
         # Vì máy đã có giao diện Desktop (XFCE) và màn hình thật, ta tắt headless để qua mặt Anti-bot
-        _driver = get_driver(headless=False, use_proxy=proxy_mode)
+        _driver = get_driver(headless=False, use_proxy=proxy_mode, profile_dir=profile_dir)
     return _driver
 
 class InlineData(BaseModel):
@@ -73,8 +80,9 @@ def run_selenium_generation(prompt: str):
         driver = get_shared_driver()
         
         try:
-            # 1. Mở trang Google Flow
-            navigate_to_flow(driver)
+            # 1. Mở trang Google Flow theo Project URL của tài khoản
+            project_url = account_manager.get_current_project_url()
+            navigate_to_flow(driver, project_url)
             
             # 2. Bấm dấu +, chọn Uploads, và Add logo vào prompt
             select_logo_from_uploads(driver)
@@ -91,15 +99,22 @@ def run_selenium_generation(prompt: str):
         except Exception as e:
             error_str = str(e)
             if "Account Quota Limit" in error_str or "quota limit" in error_str.lower():
-                print(f"[-] LỖI CHÍ MẠNG: Tài khoản Google này đã bị hết lượt sử dụng trong ngày (Quota Limit).")
-                print(f"[-] Xoay IP không có tác dụng. Vui lòng dừng script, chạy python3 login.py để đăng nhập tài khoản Google khác!")
+                print(f"[-] LỖI QUOTA: Tài khoản hiện tại đã hết lượt sử dụng.")
+                account_manager.mark_exhausted()
                 try:
                     _driver.quit()
                 except:
                     pass
                 force_kill_chrome()
                 _driver = None
-                raise e # Ném thẳng lỗi ra API để Client biết đường dừng gửi request
+                
+                if account_manager.is_all_exhausted():
+                    print(f"[-] LỖI CHÍ MẠNG: TẤT CẢ TÀI KHOẢN ĐỀU ĐÃ HẾT LƯỢT TRONG NGÀY!")
+                    raise e
+                else:
+                    print(f"[*] Đang chuyển sang tài khoản dự phòng tiếp theo...")
+                    consecutive_fails = 0
+                    continue
                 
             if "Google đã block IP này" in error_str or "Google Flow báo lỗi" in error_str:
                 print(f"[*] Google Flow đã chặn IP này (Soft/Hard block). Chờ 60s (1 phút) rồi xoay IP/Khởi động lại Trình duyệt ngay lập tức...")

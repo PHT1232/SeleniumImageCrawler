@@ -1,0 +1,25 @@
+{
+    "accounts": [
+        {
+            "id": "gmail_1",
+            "profile_dir": "chrome_profile",
+            "projects": [
+                "https://labs.google/fx/tools/flow/project/93a244b7-7817-4bbb-a97c-1fd971f7da66"
+            ]
+        },
+        {
+            "id": "gmail_2",
+            "profile_dir": "chrome_profile_2",
+            "projects": [
+                "https://labs.google/fx/tools/flow/project/REPLACE_ME_2"
+            ]
+        },
+        {
+            "id": "gmail_3",
+            "profile_dir": "chrome_profile_3",
+            "projects": [
+                "https://labs.google/fx/tools/flow/project/REPLACE_ME_3"
+            ]
+        }
+    ]
+}
