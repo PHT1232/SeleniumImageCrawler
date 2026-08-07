@@ -135,12 +135,19 @@ def get_driver(headless: bool = False, use_proxy: bool = True):
     }
     options.add_experimental_option("prefs", prefs)
     
+    import shutil
+    chrome_path = shutil.which("google-chrome") or shutil.which("google-chrome-stable") or shutil.which("chromium-browser") or shutil.which("chromium")
+    
+    if not chrome_path:
+        print("[-] CẢNH BÁO: Không tìm thấy trình duyệt Chrome/Chromium trên hệ thống!")
+        chrome_path = "/usr/bin/google-chrome" # Fallback cuối cùng
+        
     # Tạo driver sử dụng undetected_chromedriver
     driver = uc.Chrome(
         options=options, 
         use_subprocess=True, 
         user_data_dir=profile_dir, 
-        browser_executable_path="/usr/bin/google-chrome"
+        browser_executable_path=chrome_path
     )
     
     # Đặt timeout để tránh bị treo vô hạn khi load trang (nhất là sau khi xoay Proxy)
