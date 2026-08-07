@@ -24,8 +24,8 @@ def get_shared_driver():
             print("[*] Chế độ PROXY: Đang dùng Proxy làm backup do IP thật bị block...")
         else:
             print("[*] Chế độ IP THẬT: Đang dùng IP server trực tiếp (không qua Proxy)...")
-        # Sử dụng headless=True để kích hoạt chế độ headless mới của Chrome, ép dùng GPU thật
-        _driver = get_driver(headless=True, use_proxy=proxy_mode)
+        # Vì máy đã có giao diện Desktop (XFCE) và màn hình thật, ta tắt headless để qua mặt Anti-bot
+        _driver = get_driver(headless=False, use_proxy=proxy_mode)
     return _driver
 
 class InlineData(BaseModel):
