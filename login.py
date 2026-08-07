@@ -5,33 +5,67 @@ import undetected_chromedriver as uc
 
 CONFIG_PATH = os.path.join(os.path.dirname(__file__), "config.json")
 
-def main():
+def load_config():
     if not os.path.exists(CONFIG_PATH):
-        print(f"Không tìm thấy {CONFIG_PATH}. Vui lòng tạo file trước.")
-        return
-        
+        # Tự động tạo file config trống nếu chưa có
+        return {"accounts": []}
     with open(CONFIG_PATH, "r", encoding="utf-8") as f:
-        data = json.load(f)
-        
+        try:
+            return json.load(f)
+        except:
+            return {"accounts": []}
+
+def save_config(data):
+    with open(CONFIG_PATH, "w", encoding="utf-8") as f:
+        json.dump(data, f, indent=4)
+
+def main():
+    data = load_config()
     accounts = data.get("accounts", [])
-    if not accounts:
-        print("Không có tài khoản nào trong config.json")
-        return
         
-    print("=== CHỌN TÀI KHOẢN ĐỂ ĐĂNG NHẬP ===")
+    print("=== QUẢN LÝ TÀI KHOẢN GOOGLE ===")
     for i, acc in enumerate(accounts):
-        print(f"{i + 1}. {acc['id']} (Profile: {acc['profile_dir']})")
-        
-    try:
-        choice = int(input("\nNhập số thứ tự tài khoản: "))
-        if choice < 1 or choice > len(accounts):
-            print("Lựa chọn không hợp lệ!")
+        print(f"{i + 1}. Đăng nhập lại: {acc['id']} (Profile: {acc['profile_dir']})")
+    print("N. Thêm tài khoản Google MỚI")
+    
+    choice_str = input("\nNhập số thứ tự hoặc 'N' để thêm mới: ").strip().upper()
+    
+    if choice_str == 'N':
+        new_id = input("Nhập ID (Tên) cho tài khoản mới (Ví dụ: gmail_2): ").strip()
+        if not new_id:
+            print("Tên không được để trống!")
             return
-    except ValueError:
-        print("Vui lòng nhập số!")
-        return
+        if any(a['id'] == new_id for a in accounts):
+            print("Lỗi: ID này đã tồn tại trong config.json!")
+            return
+            
+        new_project = input("Nhập URL của Google Flow Project cho tài khoản này: ").strip()
+        if not new_project:
+            print("URL không được để trống!")
+            return
+            
+        new_profile_dir = f"chrome_profile_{new_id}"
+        new_acc = {
+            "id": new_id,
+            "profile_dir": new_profile_dir,
+            "projects": [new_project]
+        }
+        accounts.append(new_acc)
+        data["accounts"] = accounts
+        save_config(data)
+        print(f"[*] Đã lưu cấu hình tài khoản '{new_id}' vào config.json!")
+        selected_acc = new_acc
+    else:
+        try:
+            choice = int(choice_str)
+            if choice < 1 or choice > len(accounts):
+                print("Lựa chọn không hợp lệ!")
+                return
+            selected_acc = accounts[choice - 1]
+        except ValueError:
+            print("Vui lòng nhập số hợp lệ hoặc 'N'!")
+            return
         
-    selected_acc = accounts[choice - 1]
     profile_dir = selected_acc["profile_dir"]
     user_data_dir = os.path.abspath(profile_dir)
     os.makedirs(user_data_dir, exist_ok=True)
