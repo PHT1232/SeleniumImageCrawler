@@ -121,24 +121,41 @@ def run_selenium_generation(prompt: str):
 
 @router.post("/generate")
 async def generate_image_api(request: GenerateRequest):
-    try:
-        # Trích xuất dữ liệu từ format mới (Giống Gemini API)
-        prompt = ""
-        if request.contents and len(request.contents) > 0:
-            for part in request.contents[0].parts:
-                if part.text:
-                    prompt = part.text
-        
-        if not prompt:
-            raise HTTPException(status_code=400, detail="Missing text prompt in request")
+    # Trích xuất dữ liệu từ format mới (Giống Gemini API)
+    prompt = ""
+    if request.contents and len(request.contents) > 0:
+        for part in request.contents[0].parts:
+            if part.text:
+                prompt = part.text
+    
+    if not prompt:
+        raise HTTPException(status_code=400, detail="Missing text prompt in request")
 
-        # Đẩy request vào hàng đợi và đợi (await) kết quả trả về
-        result = await request_queue.enqueue(run_selenium_generation, prompt)
-        return result
+    import asyncio
+    import json
+    from fastapi.responses import StreamingResponse
+
+    async def generate_with_keepalive():
+        # Khởi tạo Task chạy ngầm
+        task = asyncio.create_task(request_queue.enqueue(run_selenium_generation, prompt))
         
-    except Exception as e:
-        import traceback
-        print("\n=== LỖI NGHIÊM TRỌNG TRONG QUÁ TRÌNH XỬ LÝ ===")
-        traceback.print_exc()
-        print("===============================================\n")
-        raise HTTPException(status_code=500, detail=f"Lỗi hệ thống: {str(e)}")
+        # Trong lúc Task đang chạy (xếp hàng + vẽ ảnh), mỗi 15 giây nhả ra 1 khoảng trắng
+        while not task.done():
+            yield b" "
+            await asyncio.sleep(15)
+            
+        # Khi Task hoàn thành, lấy kết quả
+        try:
+            result = task.result()
+            # Nhả nốt cục JSON xịn ra
+            yield json.dumps(result).encode('utf-8')
+        except Exception as e:
+            import traceback
+            print("\n=== LỖI NGHIÊM TRỌNG TRONG QUÁ TRÌNH XỬ LÝ ===")
+            traceback.print_exc()
+            print("===============================================\n")
+            error_json = {"detail": f"Lỗi hệ thống: {str(e)}"}
+            yield json.dumps(error_json).encode('utf-8')
+
+    # Trả về StreamingResponse, lừa Cloudflare rằng dữ liệu vẫn đang chảy
+    return StreamingResponse(generate_with_keepalive(), media_type="application/json")
