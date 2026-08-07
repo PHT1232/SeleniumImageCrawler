@@ -17,9 +17,8 @@ def navigate_to_flow(driver, url="https://labs.google/fx/tools/flow/project/93a2
     try:
         current_url = driver.current_url
         if current_url and current_url.startswith(url):
-            print("Đang ở sẵn trang Project, tiến hành F5 tải lại trang để dọn dẹp sạch sẽ bộ nhớ tạm (Chống lỗi State Corruption)...")
-            driver.refresh()
-            time.sleep(5)
+            print("Đang ở sẵn trang Project, tiếp tục gửi yêu cầu mới mà không F5 để giống người thật nhất...")
+            # Không F5 nữa để tránh Google soi pattern "F5 liên tục"
         else:
             print(f"Đang truy cập: {url}")
             driver.get(url)
