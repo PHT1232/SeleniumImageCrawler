@@ -1,6 +1,6 @@
 import requests
 
-url = "http://127.0.0.1:8989/generate"
+url = "https://bigserver.tail2d141f.ts.net/generate"
 
 prompt_text = "A futuristic cyberpunk city at night with neon lights and flying cars, high resolution, photorealistic."
 

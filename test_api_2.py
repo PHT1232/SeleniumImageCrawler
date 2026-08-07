@@ -1,6 +1,6 @@
 import requests
 
-url = "http://127.0.0.1:8989/generate"
+url = "https://bigserver.tail2d141f.ts.net/generate"
 
 prompt_text = "A peaceful Zen garden with a small pond, koi fish, and blooming cherry blossoms in spring, highly detailed."
 
