@@ -50,3 +50,12 @@ This document tracks bug fixes, errors, and requirement adjustments during devel
 * (2026-08-06) **Cập nhật FastAPI**:
   - Chuyển đổi `@app.on_event("startup")` sang `lifespan` context manager để tương thích chuẩn mới, loại bỏ cảnh báo DeprecationWarning.
   - Thêm một endpoint WebSocket giả (Dummy) tại `/notifications/hub` chặn lỗi `403/404` từ các phần mềm gọi API bên thứ ba.
+* (2026-08-07) **Lỗi Bot Detection do Dùng Trình Duyệt Ngầm (`headless=new`)**: Google vẫn phát hiện Bot kể cả khi dùng `--headless=new` và `--enable-gpu`.
+  - Giải pháp: Cài đặt môi trường XFCE Desktop vật lý trên Fedora Server. Đổi code thành `headless=False` để ép Chrome hiển thị UI lên màn hình vật lý, dùng GPU vật lý 100% giống người dùng thật.
+* (2026-08-07) **Lỗi SessionNotCreatedException qua SSH (X11 Permission)**: Khi gọi `DISPLAY=:0 python3 main.py` từ phiên SSH root, Chrome bị crash vì bảo mật X11 không cho root vẽ lên màn hình của user.
+  - Giải pháp 1: Mở Terminal trực tiếp trên Desktop XFCE gõ `xhost +` để mở khóa.
+  - Giải pháp 2: SSH bằng đúng tài khoản đang login vào XFCE.
+* (2026-08-07) **Lỗi Zombie Process Chromium gây kẹt Port**: Hàm `force_kill_chrome` cũ chỉ `pkill chrome`, bỏ sót tiến trình `chromium-browser` trên Fedora, gây lỗi không tạo được Session. Đã cập nhật hàm để kill cả `chromium`.
+* (2026-08-07) **Tối ưu Anti-bot: Loại bỏ F5 liên tục**: Việc `driver.refresh()` sau mỗi ảnh là hành vi phi logic. Đã sửa lại code: Nếu đang ở đúng URL thì tiếp tục gõ prompt luôn không cần tải lại trang.
+* (2026-08-07) **Lỗi Timeout 100s của Cloudflare Tunnel**: Hàng đợi (Queue) sinh ảnh mất hơn 150s (gồm chờ đợi và ngủ 60s/ảnh chống bot). Backend gọi API bị Cloudflare tự động cắt kết nối (524 Timeout) vì vượt ngưỡng 100s không có dữ liệu.
+  - Giải pháp: Chuyển đổi endpoint `/generate` thành **StreamingResponse (Chunked Transfer)**. API lập tức trả HTTP 200, sau đó lén bơm 1 byte khoảng trắng (` `) mỗi 15s để giữ mạng (Keep-alive), cuối cùng mới trả JSON Base64. (Dựa trên tiêu chuẩn RFC 8259, JSON parser ở client tự lờ đi khoảng trắng thừa).

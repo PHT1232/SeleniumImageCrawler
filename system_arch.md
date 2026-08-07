@@ -24,13 +24,13 @@ Kiến trúc bao gồm hai thành phần chính:
 
 ## Workflow
 1. Client gọi API `/generate` với payload chuẩn Gemini chứa `prompt`.
-2. FastAPI tiếp nhận, trích xuất text và ném công việc vào `request_queue`. Request sẽ bị "treo" (await) cho tới khi tới lượt.
-3. Queue Worker nhận lệnh, kích hoạt luồng Selenium (chạy đồng bộ trong ThreadPool).
-4. Crawler tự động mở Google Flow.
+2. FastAPI tiếp nhận, trích xuất text và ném công việc vào `request_queue`. Request sẽ bị "treo" (await) cho tới khi tới lượt. TRONG LÚC ĐÓ, API mở một luồng HTTP Streaming, trả về ngay HTTP 200 OK và lén gửi 1 khoảng trắng (Space ` `) mỗi 15 giây để "lừa" Cloudflare Tunnel không cắt kết nối vì dính luật Timeout 100s.
+3. Queue Worker nhận lệnh, kích hoạt luồng Selenium (chạy đồng bộ trong ThreadPool). Trình duyệt chạy ở chế độ `headless=False` bung trực tiếp ra màn hình vật lý (XFCE Desktop) để dùng GPU thật, lách qua con mắt soi Xvfb của Google.
+4. Crawler tự động mở Google Flow. Nếu đang ở sẵn trang Project, bỏ qua bước F5 tải lại trang để tránh hành vi tải trang liên tục của Bot.
 5. Dùng ActionChains click nút `+` -> Chọn `Uploads` -> Click `Add to prompt` ở ảnh logo đã có sẵn.
 6. Sử dụng CDP để nạp siêu tốc Text prompt vào khung chat. ActionChains di chuột bấm nút Send.
 7. Đợi ảnh mới xuất hiện bằng cách quét liên tục thay đổi DOM của các thẻ `<img>`.
 8. Tiêm JS để Fetch trực tiếp ảnh mới nhất, decode sang Base64 và ghi vào thư mục `downloads/`.
-9. Trả kết quả (JSON chuẩn Gemini) về cho Client.
-10. Queue Worker tự động Sleep 5 giây để đánh lừa thuật toán tần suất của Google trước khi nhận request tiếp theo.
-11. Sau mỗi 30 request (1 chu kỳ luân chuyển IP), hệ thống tự động tắt và khởi động lại toàn bộ trình duyệt (`driver.quit()`) để ép Proxy cấp IP mới và xóa dấu vân tay (Browser Fingerprint) tích lũy.
+9. Trả cục dữ liệu JSON chuẩn Gemini về cho Client qua luồng Streaming đang mở. (Các bộ parse JSON phía client sẽ tự động xóa các khoảng trắng rác ở đầu).
+10. Queue Worker tự động Sleep ngẫu nhiên 30-45 giây để đánh lừa thuật toán tần suất của Google trước khi nhận request tiếp theo.
+11. Quản lý Zombie & Proxy: Sau mỗi 30 request (hoặc khi Google rate-limit), hệ thống tự động tắt trình duyệt, gọi hàm `force_kill_chrome()` diệt sạch các tiến trình `chrome`, `chromium`, `chromedriver` bị treo, xóa file `SingletonLock` rồi xoay Session Proxy mới.
