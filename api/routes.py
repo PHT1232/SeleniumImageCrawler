@@ -92,29 +92,19 @@ def run_selenium_generation(prompt: str):
         except Exception as e:
             error_str = str(e)
             if "Google đã block IP này" in error_str or "Google Flow báo lỗi" in error_str:
-                consecutive_fails += 1
-                
-                if consecutive_fails < 2:
-                    # Lần 1: Google đang tạm thời rate-limit (Soft block theo Account/fingerprint)
-                    # Càng retry nhanh càng bị đánh giá là bot → chờ lâu hơn
-                    wait_time = 300  # 5 phút
-                    print(f"[*] Google Flow tạm thời chặn (soft block). Chờ {wait_time}s ({wait_time//60} phút) rồi thử lại...")
-                    time.sleep(wait_time)
-                    continue
-                else:
-                    # Lần 2+: Bật Proxy mode và xoay IP
-                    print(f"[*] Fail liên tiếp {consecutive_fails} lần → Bật Proxy mode và xoay IP cứng...")
-                    proxy_mode = True
-                    rotate_proxy_session()
-                    try:
-                        _driver.quit()
-                    except:
-                        pass
-                    force_kill_chrome()
-                    _driver = None
-                    consecutive_fails = 0
-                    time.sleep(3)
-                    continue
+                print(f"[*] Google Flow đã chặn IP này (Soft/Hard block). Chờ 60s (1 phút) rồi xoay IP/Khởi động lại Trình duyệt ngay lập tức...")
+                time.sleep(60)
+                # Bật Proxy mode và xoay IP cứng
+                proxy_mode = True
+                rotate_proxy_session()
+                try:
+                    _driver.quit()
+                except:
+                    pass
+                force_kill_chrome()
+                _driver = None
+                consecutive_fails = 0
+                continue
             
             # Lỗi không phải do IP block (lỗi code, lỗi logic...) → mới báo ra ngoài
             raise e

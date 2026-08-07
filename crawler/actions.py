@@ -195,7 +195,12 @@ def wait_for_image_load_and_download(driver, prompt_context):
         
         def check_new_image(d):
             try:
-                # Chỉ quét tìm ảnh mới, không quét lỗi nữa
+                # Quét lỗi TRƯỚC khi quét tìm ảnh (Phòng trường hợp lỗi xuất hiện trễ trong lúc ngủ đông 60s)
+                error_msg = d.find_elements(By.XPATH, "//*[contains(text(), 'Something went wrong')]")
+                if error_msg and any(el.is_displayed() for el in error_msg):
+                    raise RuntimeError("Google Flow báo lỗi (Chậm): Something went wrong (Google đã block IP này). Buộc xoay IP ngay!")
+                    
+                # Chỉ quét tìm ảnh mới
                 imgs = d.find_elements(By.XPATH, "//img[contains(@src, 'media.getMediaUrlRedirect') and not(contains(@src, 'THUMBNAIL'))]")
                 for img in imgs:
                     src = img.get_attribute("src")
@@ -205,6 +210,9 @@ def wait_for_image_load_and_download(driver, prompt_context):
                         if is_loaded:
                             return img
                 return False
+            except RuntimeError as re:
+                # Bắn lỗi RuntimeError thẳng ra ngoài để ngừng đợi và xoay IP
+                raise re
             except Exception:
                 # Nếu phần tử bị DOM làm mới (StaleElementReferenceException), bỏ qua và thử lại
                 return False
