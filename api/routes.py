@@ -86,11 +86,21 @@ def run_selenium_generation(prompt: str):
             result = wait_for_image_load_and_download(driver, prompt_context)
             
             image_count += 1
-            consecutive_fails = 0  # Reset khi thành công
+            consecutive_fails = 0
             return result
-            
         except Exception as e:
             error_str = str(e)
+            if "Account Quota Limit" in error_str or "quota limit" in error_str.lower():
+                print(f"[-] LỖI CHÍ MẠNG: Tài khoản Google này đã bị hết lượt sử dụng trong ngày (Quota Limit).")
+                print(f"[-] Xoay IP không có tác dụng. Vui lòng dừng script, chạy python3 login.py để đăng nhập tài khoản Google khác!")
+                try:
+                    _driver.quit()
+                except:
+                    pass
+                force_kill_chrome()
+                _driver = None
+                raise e # Ném thẳng lỗi ra API để Client biết đường dừng gửi request
+                
             if "Google đã block IP này" in error_str or "Google Flow báo lỗi" in error_str:
                 print(f"[*] Google Flow đã chặn IP này (Soft/Hard block). Chờ 60s (1 phút) rồi xoay IP/Khởi động lại Trình duyệt ngay lập tức...")
                 time.sleep(60)

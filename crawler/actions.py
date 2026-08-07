@@ -178,7 +178,11 @@ def wait_for_image_load_and_download(driver, prompt_context):
         
         try_again_btns = driver.find_elements(By.XPATH, "//button[.//span[contains(text(), 'Try again')] or contains(text(), 'Try again')]")
         error_msg = driver.find_elements(By.XPATH, "//*[contains(text(), 'Something went wrong')]")
+        quota_msg = driver.find_elements(By.XPATH, "//*[contains(text(), 'quota limit')]")
         
+        if quota_msg and any(el.is_displayed() for el in quota_msg):
+            raise RuntimeError("Google Flow báo lỗi: Account Quota Limit (Tài khoản Google này đã hết lượt vẽ trong ngày). Đổi tài khoản ngay!")
+            
         if (try_again_btns and any(btn.is_displayed() for btn in try_again_btns)) or \
            (error_msg and any(el.is_displayed() for el in error_msg)):
             # Cắt bỏ hoàn toàn việc bấm Try again. Nếu có lỗi, 99% là do IP bị block.
@@ -197,6 +201,11 @@ def wait_for_image_load_and_download(driver, prompt_context):
             try:
                 # Quét lỗi TRƯỚC khi quét tìm ảnh (Phòng trường hợp lỗi xuất hiện trễ trong lúc ngủ đông 60s)
                 error_msg = d.find_elements(By.XPATH, "//*[contains(text(), 'Something went wrong')]")
+                quota_msg = d.find_elements(By.XPATH, "//*[contains(text(), 'quota limit')]")
+                
+                if quota_msg and any(el.is_displayed() for el in quota_msg):
+                    raise RuntimeError("Google Flow báo lỗi (Chậm): Account Quota Limit (Hết lượt vẽ trong ngày). Đổi tài khoản ngay!")
+                    
                 if error_msg and any(el.is_displayed() for el in error_msg):
                     raise RuntimeError("Google Flow báo lỗi (Chậm): Something went wrong (Google đã block IP này). Buộc xoay IP ngay!")
                     
