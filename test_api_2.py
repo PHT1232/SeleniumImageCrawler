@@ -1,6 +1,6 @@
 import requests
 
-url = "https://bigserver.tail2d141f.ts.net/generate"
+url = "https://instructions-specifically-unlikely-shuttle.trycloudflare.com/generate"
 
 prompt_text = "A peaceful Zen garden with a small pond, koi fish, and blooming cherry blossoms in spring, highly detailed."
 

@@ -1,6 +1,6 @@
 import requests
 
-url = "https://bigserver.tail2d141f.ts.net/generate"
+url = "https://instructions-specifically-unlikely-shuttle.trycloudflare.com/generate"
 
 prompt_text = "A futuristic cyberpunk city at night with neon lights and flying cars, high resolution, photorealistic."
 
