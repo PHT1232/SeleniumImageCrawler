@@ -16,6 +16,7 @@ def force_kill_chrome():
     try:
         import time
         os.system("pkill -9 -f chrome")
+        os.system("pkill -9 -f chromium")
         os.system("pkill -9 -f chromedriver")
         
         # Xóa các file lock của Chrome profile để tránh lỗi SessionNotCreatedException
