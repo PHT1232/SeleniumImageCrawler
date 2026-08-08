@@ -2,6 +2,10 @@ import undetected_chromedriver as uc
 import os
 import re
 import uuid
+import time
+import glob
+import json
+import shutil
 
 # Global session ID cho Proxy-Cheap để quản lý Sticky IP programmatically
 current_session_id = str(uuid.uuid4())[:8]
@@ -14,7 +18,6 @@ def rotate_proxy_session():
 def force_kill_chrome():
     """Ép diệt toàn bộ tiến trình Chrome và ChromeDriver bị treo để giải phóng RAM và Lock file."""
     try:
-        import time
         os.system("pkill -9 -f chrome")
         os.system("pkill -9 -f chromium")
         os.system("pkill -9 -f chromedriver")
@@ -22,7 +25,6 @@ def force_kill_chrome():
         # Xóa các file lock của Chrome profile để tránh lỗi SessionNotCreatedException
         # Cập nhật quét toàn bộ các thư mục có tiền tố chrome_profile* (hỗ trợ nhiều tài khoản)
         base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
-        import glob
         profile_dirs = glob.glob(os.path.join(base_dir, "chrome_profile*"))
         
         for p_dir in profile_dirs:
@@ -47,15 +49,14 @@ def force_kill_chrome():
                 if os.path.exists(pf):
                     try:
                         # Kiểm tra xem file có bị corrupt không bằng cách parse JSON thử
-                    import json
-                    with open(pf, "r", encoding="utf-8") as f:
-                        json.load(f)
-                except (json.JSONDecodeError, ValueError):
-                    print(f"[*] Phát hiện file {pref_file} bị corrupt, đang xóa...")
-                    try:
-                        os.remove(pf)
-                    except:
-                        pass
+                        with open(pf, "r", encoding="utf-8") as f:
+                            json.load(f)
+                    except (json.JSONDecodeError, ValueError):
+                        print(f"[*] Phát hiện file {pref_file} bị corrupt, đang xóa...")
+                        try:
+                            os.remove(pf)
+                        except:
+                            pass
         print("[*] Đã dọn dẹp các tiến trình Chrome cũ và xóa file Lock.")
         # Ngủ 2 giây để hệ điều hành có thời gian nhả Port và dọn rác hoàn toàn
         time.sleep(2)
@@ -143,7 +144,6 @@ def get_driver(headless: bool = False, use_proxy: bool = True, profile_dir: str 
     }
     options.add_experimental_option("prefs", prefs)
     
-    import shutil
     chrome_path = shutil.which("google-chrome") or shutil.which("google-chrome-stable") or shutil.which("chromium-browser") or shutil.which("chromium")
     
     if not chrome_path:
